@@ -9,6 +9,7 @@ import { ImageEngine } from "./engines/image-engine.js";
 import { MidiEngine } from "./engines/midi-engine.js";
 import { AudioEngine } from "./engines/audio-engine.js";
 import { MetaParser } from "./parsers/meta-parser.js";
+export { ImageEngine, MidiEngine, AudioEngine, MetaParser };
 
 export class FloatImgPlay {
   constructor(options = {}) {
@@ -310,6 +311,17 @@ export class FloatImgPlay {
     if (inst.opts.autoplayWhenVisibleOnly && !this._canPlayNow(inst)) {
       inst.pendingAutoplay = true;
       return;
+    }
+
+    // AudioEngine: fetch and decode audio buffer before play
+    if (inst.engine instanceof AudioEngine && inst.meta?.audio?.url && !inst.currentScore?.audioBuffer) {
+      try {
+        const audioBuffer = await AudioEngine.fetchAndDecode(inst.meta.audio.url, ctx);
+        inst.currentScore = { audioBuffer, audioUrl: inst.meta.audio.url };
+      } catch (err) {
+        console.warn("[FloatImgPlay] Audio fetch failed:", err);
+        return;
+      }
     }
 
     this._stopInstance(inst);

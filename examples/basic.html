@@ -3,72 +3,837 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FloatImgPlay - Basic Example</title>
+  <title>FloatImgPlay - Demo</title>
   <link rel="stylesheet" href="../dist/float-imgplay.css">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #1a1a2e;
+      background: #0f0f1a;
       color: #e0e0e0;
       padding: 40px 20px;
+      line-height: 1.6;
     }
-    h1 { text-align: center; margin-bottom: 12px; font-size: 28px; color: #fff; }
-    p.subtitle { text-align: center; margin-bottom: 40px; color: #888; }
-    .demo-section {
-      max-width: 800px;
-      margin: 0 auto 48px;
+    h1 { text-align: center; margin-bottom: 8px; font-size: 32px; color: #fff; }
+    p.subtitle { text-align: center; margin-bottom: 48px; color: #666; font-size: 14px; }
+    .container { max-width: 960px; margin: 0 auto; }
+
+    /* --- Section --- */
+    .section { margin-bottom: 56px; }
+    .section h2 {
+      font-size: 20px; color: #fff; margin-bottom: 8px;
+      border-bottom: 1px solid #2a2a3e; padding-bottom: 8px;
     }
-    .demo-section h2 {
-      font-size: 18px;
-      margin-bottom: 16px;
-      color: #aaa;
-    }
+    .section h2 span { color: #666; font-weight: 400; font-size: 14px; margin-left: 8px; }
+    .section p.desc { color: #888; font-size: 13px; margin-bottom: 16px; }
+
+    /* --- Grid --- */
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
     }
     .float-imgplay {
       border-radius: 12px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+      overflow: hidden;
+    }
+
+    /* --- Settings Panel --- */
+    .settings-panel {
+      background: #16162a;
+      border: 1px solid #2a2a3e;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .settings-panel h3 {
+      font-size: 14px; color: #aaa; text-transform: uppercase; letter-spacing: 1px;
+      margin-bottom: 16px;
+    }
+    .settings-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
+    }
+    .setting-row {
+      display: flex; align-items: center; gap: 10px;
+      background: #1c1c34; padding: 8px 12px; border-radius: 8px;
+    }
+    .setting-row label {
+      font-size: 12px; color: #aaa; min-width: 140px; flex-shrink: 0;
+    }
+    .setting-row input[type="range"] { flex: 1; min-width: 80px; }
+    .setting-row input[type="number"] {
+      width: 70px; background: #252542; border: 1px solid #3a3a5a;
+      color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 12px;
+    }
+    .setting-row select {
+      flex: 1; background: #252542; border: 1px solid #3a3a5a;
+      color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 12px;
+    }
+    .setting-row input[type="checkbox"] { accent-color: #6c5ce7; }
+    .setting-row .val {
+      font-size: 11px; color: #6c5ce7; min-width: 40px; text-align: right;
+    }
+
+    /* --- Buttons --- */
+    .btn-row { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+    .btn {
+      padding: 8px 20px; border: 0; border-radius: 8px; cursor: pointer;
+      font-size: 13px; font-weight: 600; transition: all 0.15s;
+    }
+    .btn-primary { background: #6c5ce7; color: #fff; }
+    .btn-primary:hover { background: #7c6df7; }
+    .btn-secondary { background: #2a2a3e; color: #ccc; }
+    .btn-secondary:hover { background: #3a3a4e; }
+    .btn-danger { background: #e74c3c; color: #fff; }
+    .btn-danger:hover { background: #f75c4c; }
+
+    /* --- Code Block --- */
+    .code-block {
+      background: #12121f; border: 1px solid #2a2a3e; border-radius: 8px;
+      padding: 16px 20px; overflow-x: auto; margin-top: 12px;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 12px; line-height: 1.7; color: #a8b2d1;
+      position: relative;
+    }
+    .code-block .copy-btn {
+      position: absolute; top: 8px; right: 8px;
+      background: #2a2a3e; border: 0; color: #888; padding: 4px 10px;
+      border-radius: 4px; font-size: 11px; cursor: pointer;
+    }
+    .code-block .copy-btn:hover { background: #3a3a4e; color: #fff; }
+    .code-block .kw { color: #c792ea; }
+    .code-block .str { color: #c3e88d; }
+    .code-block .num { color: #f78c6c; }
+    .code-block .cm { color: #546e7a; }
+    .code-block .fn { color: #82aaff; }
+    .code-block .prop { color: #f07178; }
+
+    /* --- API Demo --- */
+    .api-demo {
+      background: #16162a; border: 1px solid #2a2a3e; border-radius: 12px;
+      padding: 20px; margin-top: 16px;
+    }
+    .api-demo h3 { font-size: 14px; color: #aaa; margin-bottom: 12px; }
+
+    /* --- Tabs --- */
+    .tabs { display: flex; gap: 0; margin-bottom: 16px; }
+    .tab {
+      padding: 8px 16px; background: #1c1c34; border: 1px solid #2a2a3e;
+      color: #888; cursor: pointer; font-size: 13px; border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .tab:first-child { border-radius: 8px 0 0 8px; }
+    .tab:last-child { border-radius: 0 8px 8px 0; }
+    .tab.active { background: #252542; color: #fff; border-bottom-color: #6c5ce7; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* --- Generated code output --- */
+    #generated-code {
+      background: #12121f; border: 1px solid #2a2a3e; border-radius: 8px;
+      padding: 16px 20px; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 12px; line-height: 1.7; color: #a8b2d1;
+      white-space: pre-wrap; word-break: break-all; margin-top: 12px;
+      max-height: 400px; overflow-y: auto;
     }
   </style>
 </head>
 <body>
 
   <h1>FloatImgPlay</h1>
-  <p class="subtitle">Click an image to hear its sound</p>
+  <p class="subtitle">Image-to-sound player &mdash; Scans pixel data and generates rule-based music via Web Audio API</p>
 
-  <div class="demo-section">
-    <h2>img tag examples</h2>
-    <div class="grid">
-      <div class="float-imgplay">
-        <img src="https://picsum.photos/seed/sky/320/320" alt="Sky" width="320" height="320">
-      </div>
-      <div class="float-imgplay">
-        <img src="https://picsum.photos/seed/forest/320/320" alt="Forest" width="320" height="320">
-      </div>
-      <div class="float-imgplay">
-        <img src="https://picsum.photos/seed/ocean/320/320" alt="Ocean" width="320" height="320">
+  <div class="container">
+
+    <!-- ============ LIVE DEMO ============ -->
+    <div class="section">
+      <h2>Live Demo <span>Click an image to hear its sound</span></h2>
+
+      <div class="grid" id="demo-grid">
+        <div class="float-imgplay" id="demo-sky">
+          <img src="https://picsum.photos/seed/sky/320/320" alt="Sky" width="320" height="320">
+        </div>
+        <div class="float-imgplay" id="demo-forest">
+          <img src="https://picsum.photos/seed/forest/320/320" alt="Forest" width="320" height="320">
+        </div>
+        <div class="float-imgplay" id="demo-ocean">
+          <img src="https://picsum.photos/seed/ocean/320/320" alt="Ocean" width="320" height="320">
+        </div>
+        <div class="float-imgplay" id="demo-mountain"
+             style="background-image:url('https://picsum.photos/seed/mountain/320/320'); width:100%; height:220px; background-size:cover;">
+        </div>
       </div>
     </div>
-  </div>
 
-  <div class="demo-section">
-    <h2>background-image example</h2>
-    <div class="grid">
-      <div class="float-imgplay"
-           style="background-image:url('https://picsum.photos/seed/mountain/320/320'); width:320px; height:320px; background-size:cover; border-radius:12px;">
+    <!-- ============ SETTINGS PANEL ============ -->
+    <div class="section">
+      <h2>Settings <span>Change options and click "Apply" to reinitialize</span></h2>
+
+      <!-- General Options -->
+      <div class="settings-panel">
+        <h3>General</h3>
+        <div class="settings-grid">
+          <div class="setting-row">
+            <label>autoplay</label>
+            <input type="checkbox" id="opt-autoplay">
+          </div>
+          <div class="setting-row">
+            <label>autoplayWhenVisibleOnly</label>
+            <input type="checkbox" id="opt-autoplayWhenVisibleOnly" checked>
+          </div>
+          <div class="setting-row">
+            <label>stopWhenHidden</label>
+            <input type="checkbox" id="opt-stopWhenHidden" checked>
+          </div>
+          <div class="setting-row">
+            <label>showPlayOverlay</label>
+            <input type="checkbox" id="opt-showPlayOverlay" checked>
+          </div>
+          <div class="setting-row">
+            <label>showVolumeControl</label>
+            <input type="checkbox" id="opt-showVolumeControl" checked>
+          </div>
+          <div class="setting-row">
+            <label>visibilityThreshold</label>
+            <input type="range" id="opt-visibilityThreshold" min="0" max="1" step="0.05" value="0.25">
+            <span class="val" id="val-visibilityThreshold">0.25</span>
+          </div>
+          <div class="setting-row">
+            <label>zIndexUI</label>
+            <input type="number" id="opt-zIndexUI" value="12" min="0" max="9999">
+          </div>
+        </div>
+      </div>
+
+      <!-- Audio Options -->
+      <div class="settings-panel">
+        <h3>Audio - Volume &amp; Pitch</h3>
+        <div class="settings-grid">
+          <div class="setting-row">
+            <label>masterVolume</label>
+            <input type="range" id="opt-masterVolume" min="0" max="1" step="0.01" value="0.25">
+            <span class="val" id="val-masterVolume">0.25</span>
+          </div>
+          <div class="setting-row">
+            <label>pitchShiftSemitones</label>
+            <input type="range" id="opt-pitchShiftSemitones" min="-24" max="24" step="1" value="0">
+            <span class="val" id="val-pitchShiftSemitones">0</span>
+          </div>
+          <div class="setting-row">
+            <label>waveform</label>
+            <select id="opt-waveform">
+              <option value="sine">sine</option>
+              <option value="square">square</option>
+              <option value="sawtooth">sawtooth</option>
+              <option value="triangle" selected>triangle</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-panel">
+        <h3>Audio - Tempo &amp; Rhythm</h3>
+        <div class="settings-grid">
+          <div class="setting-row">
+            <label>tempo (BPM)</label>
+            <input type="range" id="opt-tempo" min="40" max="240" step="1" value="100">
+            <span class="val" id="val-tempo">100</span>
+          </div>
+          <div class="setting-row">
+            <label>noteDurationBeats</label>
+            <input type="range" id="opt-noteDurationBeats" min="0.1" max="2" step="0.1" value="0.5">
+            <span class="val" id="val-noteDurationBeats">0.5</span>
+          </div>
+          <div class="setting-row">
+            <label>restThreshold</label>
+            <input type="range" id="opt-restThreshold" min="0" max="128" step="1" value="28">
+            <span class="val" id="val-restThreshold">28</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-panel">
+        <h3>Audio - Sampling</h3>
+        <div class="settings-grid">
+          <div class="setting-row">
+            <label>sampleColumns</label>
+            <input type="range" id="opt-sampleColumns" min="4" max="64" step="1" value="24">
+            <span class="val" id="val-sampleColumns">24</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-panel">
+        <h3>Audio - Filter</h3>
+        <div class="settings-grid">
+          <div class="setting-row">
+            <label>filterType</label>
+            <select id="opt-filterType">
+              <option value="lowpass" selected>lowpass</option>
+              <option value="highpass">highpass</option>
+              <option value="bandpass">bandpass</option>
+              <option value="notch">notch</option>
+              <option value="allpass">allpass</option>
+            </select>
+          </div>
+          <div class="setting-row">
+            <label>filterBaseHz</label>
+            <input type="range" id="opt-filterBaseHz" min="100" max="8000" step="50" value="900">
+            <span class="val" id="val-filterBaseHz">900</span>
+          </div>
+          <div class="setting-row">
+            <label>filterVelocityAmount</label>
+            <input type="range" id="opt-filterVelocityAmount" min="0" max="8000" step="100" value="3000">
+            <span class="val" id="val-filterVelocityAmount">3000</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-panel">
+        <h3>Audio - Envelope</h3>
+        <div class="settings-grid">
+          <div class="setting-row">
+            <label>attack (s)</label>
+            <input type="range" id="opt-attack" min="0.001" max="0.5" step="0.001" value="0.02">
+            <span class="val" id="val-attack">0.02</span>
+          </div>
+          <div class="setting-row">
+            <label>release (s)</label>
+            <input type="range" id="opt-release" min="0.001" max="0.5" step="0.001" value="0.03">
+            <span class="val" id="val-release">0.03</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-panel">
+        <h3>Audio - Scale &amp; Key</h3>
+        <div class="settings-grid">
+          <div class="setting-row">
+            <label>scaleMode</label>
+            <select id="opt-scaleMode">
+              <option value="auto" selected>auto</option>
+              <option value="major">major</option>
+              <option value="minor">minor</option>
+              <option value="pentatonic">pentatonic</option>
+            </select>
+          </div>
+          <div class="setting-row">
+            <label>rootMode</label>
+            <select id="opt-rootMode">
+              <option value="filename-first-char" selected>filename-first-char</option>
+              <option value="fixed">fixed</option>
+            </select>
+          </div>
+          <div class="setting-row">
+            <label>fixedRootMidi</label>
+            <input type="range" id="opt-fixedRootMidi" min="36" max="84" step="1" value="60">
+            <span class="val" id="val-fixedRootMidi">60 (C4)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-panel">
+        <h3>Audio - Octave &amp; Duration</h3>
+        <div class="settings-grid">
+          <div class="setting-row">
+            <label>octaveContrastThreshold</label>
+            <input type="range" id="opt-octaveContrastThreshold" min="0" max="255" step="1" value="100">
+            <span class="val" id="val-octaveContrastThreshold">100</span>
+          </div>
+          <div class="setting-row">
+            <label>octaveShiftSemitones</label>
+            <input type="range" id="opt-octaveShiftSemitones" min="0" max="24" step="1" value="12">
+            <span class="val" id="val-octaveShiftSemitones">12</span>
+          </div>
+          <div class="setting-row">
+            <label>brightDuration</label>
+            <input type="range" id="opt-brightDuration" min="0.05" max="1" step="0.01" value="0.26">
+            <span class="val" id="val-brightDuration">0.26</span>
+          </div>
+          <div class="setting-row">
+            <label>blueDuration</label>
+            <input type="range" id="opt-blueDuration" min="0.05" max="1" step="0.01" value="0.46">
+            <span class="val" id="val-blueDuration">0.46</span>
+          </div>
+          <div class="setting-row">
+            <label>neutralDuration</label>
+            <input type="range" id="opt-neutralDuration" min="0.05" max="1" step="0.01" value="0.34">
+            <span class="val" id="val-neutralDuration">0.34</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Apply / Reset -->
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btn-apply">Apply Settings</button>
+        <button class="btn btn-secondary" id="btn-reset">Reset to Defaults</button>
+        <button class="btn btn-danger" id="btn-stop-all">Stop All</button>
+      </div>
+
+      <!-- Generated Code -->
+      <div style="margin-top: 20px;">
+        <h3 style="font-size:14px; color:#aaa; margin-bottom:8px;">Generated Code</h3>
+        <p class="desc">Current settings as initialization code. Copy and use directly.</p>
+        <div id="generated-code"></div>
       </div>
     </div>
+
+    <!-- ============ API DEMO ============ -->
+    <div class="section">
+      <h2>API Methods</h2>
+      <div class="api-demo">
+        <h3>Try the API</h3>
+        <div class="btn-row">
+          <button class="btn btn-secondary" id="api-play-first">player.play(el)</button>
+          <button class="btn btn-secondary" id="api-stop-first">player.stop(el)</button>
+          <button class="btn btn-secondary" id="api-refresh">player.refresh()</button>
+          <button class="btn btn-danger" id="api-destroy">player.destroy()</button>
+          <button class="btn btn-primary" id="api-reinit">player.init()</button>
+        </div>
+        <p class="desc" style="margin-top:12px">
+          play/stop targets the first image (Sky). destroy removes all instances. init re-initializes.
+        </p>
+      </div>
+    </div>
+
+    <!-- ============ CODE EXAMPLES ============ -->
+    <div class="section">
+      <h2>Code Examples</h2>
+
+      <div class="tabs">
+        <div class="tab active" data-tab="tab-script">Script Tag</div>
+        <div class="tab" data-tab="tab-esm">ESM Import</div>
+        <div class="tab" data-tab="tab-cjs">CommonJS</div>
+        <div class="tab" data-tab="tab-bg">Background Image</div>
+        <div class="tab" data-tab="tab-perelement">Per-Element</div>
+        <div class="tab" data-tab="tab-api">API Usage</div>
+      </div>
+
+      <!-- Script Tag -->
+      <div class="tab-content active" id="tab-script">
+        <div class="code-block">
+          <button class="copy-btn" data-target="tab-script">Copy</button>
+<span class="cm">&lt;!-- CSS (optional) --&gt;</span>
+&lt;<span class="kw">link</span> <span class="prop">rel</span>=<span class="str">"stylesheet"</span> <span class="prop">href</span>=<span class="str">"https://unpkg.com/float-imgplay/dist/float-imgplay.css"</span>&gt;
+
+<span class="cm">&lt;!-- Image --&gt;</span>
+&lt;<span class="kw">div</span> <span class="prop">class</span>=<span class="str">"float-imgplay"</span>&gt;
+  &lt;<span class="kw">img</span> <span class="prop">src</span>=<span class="str">"/images/photo.jpg"</span> <span class="prop">width</span>=<span class="str">"320"</span> <span class="prop">height</span>=<span class="str">"320"</span>&gt;
+&lt;/<span class="kw">div</span>&gt;
+
+<span class="cm">&lt;!-- Library --&gt;</span>
+&lt;<span class="kw">script</span> <span class="prop">src</span>=<span class="str">"https://unpkg.com/float-imgplay"</span>&gt;&lt;/<span class="kw">script</span>&gt;
+&lt;<span class="kw">script</span>&gt;
+  <span class="kw">new</span> <span class="fn">FloatImgPlay</span>({
+    <span class="prop">selector</span>: <span class="str">'.float-imgplay'</span>
+  }).<span class="fn">init</span>();
+&lt;/<span class="kw">script</span>&gt;
+        </div>
+      </div>
+
+      <!-- ESM -->
+      <div class="tab-content" id="tab-esm">
+        <div class="code-block">
+          <button class="copy-btn" data-target="tab-esm">Copy</button>
+<span class="kw">import</span> { <span class="fn">FloatImgPlay</span> } <span class="kw">from</span> <span class="str">'float-imgplay'</span>;
+<span class="kw">import</span> <span class="str">'float-imgplay/css'</span>;
+
+<span class="kw">const</span> player = <span class="kw">new</span> <span class="fn">FloatImgPlay</span>({
+  <span class="prop">selector</span>: <span class="str">'.float-imgplay'</span>,
+  <span class="prop">autoplay</span>: <span class="num">false</span>,
+  <span class="prop">audio</span>: {
+    <span class="prop">masterVolume</span>: <span class="num">0.35</span>,
+    <span class="prop">waveform</span>: <span class="str">'triangle'</span>,
+    <span class="prop">tempo</span>: <span class="num">104</span>
+  }
+});
+
+player.<span class="fn">init</span>();
+        </div>
+      </div>
+
+      <!-- CommonJS -->
+      <div class="tab-content" id="tab-cjs">
+        <div class="code-block">
+          <button class="copy-btn" data-target="tab-cjs">Copy</button>
+<span class="kw">const</span> { <span class="fn">FloatImgPlay</span> } = <span class="fn">require</span>(<span class="str">'float-imgplay'</span>);
+
+<span class="kw">const</span> player = <span class="kw">new</span> <span class="fn">FloatImgPlay</span>({
+  <span class="prop">selector</span>: <span class="str">'.float-imgplay'</span>
+});
+
+player.<span class="fn">init</span>();
+        </div>
+      </div>
+
+      <!-- Background Image -->
+      <div class="tab-content" id="tab-bg">
+        <div class="code-block">
+          <button class="copy-btn" data-target="tab-bg">Copy</button>
+<span class="cm">&lt;!-- Works with background-image too --&gt;</span>
+&lt;<span class="kw">div</span> <span class="prop">class</span>=<span class="str">"float-imgplay"</span>
+     <span class="prop">style</span>=<span class="str">"background-image:url('/images/sky.jpg');
+            width:320px; height:320px;
+            background-size:cover;"</span>&gt;
+&lt;/<span class="kw">div</span>&gt;
+
+<span class="cm">&lt;!-- Also works on img directly --&gt;</span>
+&lt;<span class="kw">img</span> <span class="prop">class</span>=<span class="str">"float-imgplay"</span>
+     <span class="prop">src</span>=<span class="str">"/images/photo.jpg"</span>
+     <span class="prop">width</span>=<span class="str">"320"</span> <span class="prop">height</span>=<span class="str">"320"</span>&gt;
+        </div>
+      </div>
+
+      <!-- Per-Element -->
+      <div class="tab-content" id="tab-perelement">
+        <div class="code-block">
+          <button class="copy-btn" data-target="tab-perelement">Copy</button>
+<span class="kw">const</span> player = <span class="kw">new</span> <span class="fn">FloatImgPlay</span>({
+  <span class="prop">selector</span>: <span class="str">'.float-imgplay'</span>,
+  <span class="prop">autoplay</span>: <span class="num">false</span>
+});
+player.<span class="fn">init</span>();
+
+<span class="cm">// Register a specific element with different options</span>
+<span class="kw">const</span> hero = document.<span class="fn">querySelector</span>(<span class="str">'#hero-image'</span>);
+player.<span class="fn">register</span>(hero, {
+  <span class="prop">autoplay</span>: <span class="num">true</span>,
+  <span class="prop">audio</span>: {
+    <span class="prop">waveform</span>: <span class="str">'sawtooth'</span>,
+    <span class="prop">masterVolume</span>: <span class="num">0.5</span>,
+    <span class="prop">pitchShiftSemitones</span>: <span class="num">3</span>,
+    <span class="prop">tempo</span>: <span class="num">132</span>,
+    <span class="prop">scaleMode</span>: <span class="str">'minor'</span>
+  }
+});
+        </div>
+      </div>
+
+      <!-- API -->
+      <div class="tab-content" id="tab-api">
+        <div class="code-block">
+          <button class="copy-btn" data-target="tab-api">Copy</button>
+<span class="kw">const</span> player = <span class="kw">new</span> <span class="fn">FloatImgPlay</span>({
+  <span class="prop">selector</span>: <span class="str">'.float-imgplay'</span>
+});
+player.<span class="fn">init</span>();
+
+<span class="cm">// Play a specific element</span>
+player.<span class="fn">play</span>(document.<span class="fn">querySelector</span>(<span class="str">'#my-image'</span>));
+
+<span class="cm">// Stop a specific element</span>
+player.<span class="fn">stop</span>(document.<span class="fn">querySelector</span>(<span class="str">'#my-image'</span>));
+
+<span class="cm">// Pause (alias for stop)</span>
+player.<span class="fn">pause</span>(document.<span class="fn">querySelector</span>(<span class="str">'#my-image'</span>));
+
+<span class="cm">// Re-analyze after image src changes</span>
+player.<span class="fn">refresh</span>();
+
+<span class="cm">// Remove a single element</span>
+player.<span class="fn">unregister</span>(document.<span class="fn">querySelector</span>(<span class="str">'#my-image'</span>));
+
+<span class="cm">// Clean up everything</span>
+player.<span class="fn">destroy</span>();
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ ALL OPTIONS REFERENCE ============ -->
+    <div class="section">
+      <h2>Full Options Reference</h2>
+      <div class="code-block">
+        <button class="copy-btn" data-target="full-opts">Copy</button>
+<span class="kw">new</span> <span class="fn">FloatImgPlay</span>({
+  <span class="cm">// --- General ---</span>
+  <span class="prop">selector</span>: <span class="str">'.float-imgplay'</span>,       <span class="cm">// CSS selector for target elements</span>
+  <span class="prop">autoplay</span>: <span class="num">false</span>,                  <span class="cm">// Auto-play on init</span>
+  <span class="prop">autoplayWhenVisibleOnly</span>: <span class="num">true</span>,    <span class="cm">// Only autoplay when element is visible</span>
+  <span class="prop">stopWhenHidden</span>: <span class="num">true</span>,             <span class="cm">// Stop when scrolled away / tab hidden / occluded</span>
+  <span class="prop">showPlayOverlay</span>: <span class="num">true</span>,            <span class="cm">// Show centered play button overlay</span>
+  <span class="prop">showVolumeControl</span>: <span class="num">true</span>,          <span class="cm">// Show volume slider (bottom-right)</span>
+  <span class="prop">overlayIcon</span>: <span class="str">'\u25B6'</span>,               <span class="cm">// Play button icon character</span>
+  <span class="prop">overlayPlayText</span>: <span class="str">''</span>,              <span class="cm">// Optional text next to play icon</span>
+  <span class="prop">visibilityThreshold</span>: <span class="num">0.25</span>,        <span class="cm">// IntersectionObserver threshold (0-1)</span>
+  <span class="prop">zIndexUI</span>: <span class="num">12</span>,                      <span class="cm">// z-index for UI overlay</span>
+
+  <span class="cm">// --- Audio ---</span>
+  <span class="prop">audio</span>: {
+    <span class="prop">masterVolume</span>: <span class="num">0.25</span>,             <span class="cm">// Master volume (0-1)</span>
+    <span class="prop">pitchShiftSemitones</span>: <span class="num">0</span>,        <span class="cm">// Global pitch shift (-24 to 24)</span>
+    <span class="prop">waveform</span>: <span class="str">'triangle'</span>,           <span class="cm">// sine | square | sawtooth | triangle</span>
+    <span class="prop">tempo</span>: <span class="num">100</span>,                     <span class="cm">// BPM (40-240)</span>
+    <span class="prop">noteDurationBeats</span>: <span class="num">0.5</span>,         <span class="cm">// Note length in beats</span>
+    <span class="prop">restThreshold</span>: <span class="num">28</span>,              <span class="cm">// Brightness below this = rest (0-128)</span>
+    <span class="prop">sampleColumns</span>: <span class="num">24</span>,              <span class="cm">// Number of pixel columns to sample (4-64)</span>
+    <span class="prop">sampleRows</span>: [<span class="num">0.25</span>, <span class="num">0.5</span>, <span class="num">0.75</span>], <span class="cm">// Vertical positions to sample (0-1)</span>
+    <span class="prop">filterType</span>: <span class="str">'lowpass'</span>,           <span class="cm">// lowpass | highpass | bandpass | notch | allpass</span>
+    <span class="prop">filterBaseHz</span>: <span class="num">900</span>,              <span class="cm">// Base filter frequency (Hz)</span>
+    <span class="prop">filterVelocityAmount</span>: <span class="num">3000</span>,     <span class="cm">// Velocity-driven filter sweep range (Hz)</span>
+    <span class="prop">attack</span>: <span class="num">0.02</span>,                   <span class="cm">// Envelope attack time (seconds)</span>
+    <span class="prop">release</span>: <span class="num">0.03</span>,                  <span class="cm">// Envelope release time (seconds)</span>
+    <span class="prop">scaleMode</span>: <span class="str">'auto'</span>,              <span class="cm">// auto | major | minor | pentatonic</span>
+    <span class="prop">rootMode</span>: <span class="str">'filename-first-char'</span>, <span class="cm">// filename-first-char | fixed</span>
+    <span class="prop">fixedRootMidi</span>: <span class="num">60</span>,              <span class="cm">// MIDI note for fixed root (36-84, 60=C4)</span>
+    <span class="prop">octaveContrastThreshold</span>: <span class="num">100</span>,   <span class="cm">// R-B contrast above this = octave shift</span>
+    <span class="prop">octaveShiftSemitones</span>: <span class="num">12</span>,       <span class="cm">// Semitones to shift on contrast trigger</span>
+    <span class="prop">brightDuration</span>: <span class="num">0.26</span>,           <span class="cm">// Duration multiplier for red-dominant pixels</span>
+    <span class="prop">blueDuration</span>: <span class="num">0.46</span>,             <span class="cm">// Duration multiplier for blue-dominant pixels</span>
+    <span class="prop">neutralDuration</span>: <span class="num">0.34</span>           <span class="cm">// Duration multiplier for neutral pixels</span>
+  }
+}).<span class="fn">init</span>();
+      </div>
+    </div>
+
   </div>
 
   <script src="../dist/float-imgplay.iife.js"></script>
   <script>
-    new FloatImgPlay.FloatImgPlay({
-      selector: '.float-imgplay'
-    }).init();
+    // --- Player instance ---
+    let player = null;
+
+    function getOptionsFromUI() {
+      return {
+        selector: '.float-imgplay',
+        autoplay: document.getElementById('opt-autoplay').checked,
+        autoplayWhenVisibleOnly: document.getElementById('opt-autoplayWhenVisibleOnly').checked,
+        stopWhenHidden: document.getElementById('opt-stopWhenHidden').checked,
+        showPlayOverlay: document.getElementById('opt-showPlayOverlay').checked,
+        showVolumeControl: document.getElementById('opt-showVolumeControl').checked,
+        visibilityThreshold: parseFloat(document.getElementById('opt-visibilityThreshold').value),
+        zIndexUI: parseInt(document.getElementById('opt-zIndexUI').value, 10),
+        audio: {
+          masterVolume: parseFloat(document.getElementById('opt-masterVolume').value),
+          pitchShiftSemitones: parseInt(document.getElementById('opt-pitchShiftSemitones').value, 10),
+          waveform: document.getElementById('opt-waveform').value,
+          tempo: parseInt(document.getElementById('opt-tempo').value, 10),
+          noteDurationBeats: parseFloat(document.getElementById('opt-noteDurationBeats').value),
+          restThreshold: parseInt(document.getElementById('opt-restThreshold').value, 10),
+          sampleColumns: parseInt(document.getElementById('opt-sampleColumns').value, 10),
+          sampleRows: [0.25, 0.5, 0.75],
+          filterType: document.getElementById('opt-filterType').value,
+          filterBaseHz: parseInt(document.getElementById('opt-filterBaseHz').value, 10),
+          filterVelocityAmount: parseInt(document.getElementById('opt-filterVelocityAmount').value, 10),
+          attack: parseFloat(document.getElementById('opt-attack').value),
+          release: parseFloat(document.getElementById('opt-release').value),
+          scaleMode: document.getElementById('opt-scaleMode').value,
+          rootMode: document.getElementById('opt-rootMode').value,
+          fixedRootMidi: parseInt(document.getElementById('opt-fixedRootMidi').value, 10),
+          octaveContrastThreshold: parseInt(document.getElementById('opt-octaveContrastThreshold').value, 10),
+          octaveShiftSemitones: parseInt(document.getElementById('opt-octaveShiftSemitones').value, 10),
+          brightDuration: parseFloat(document.getElementById('opt-brightDuration').value),
+          blueDuration: parseFloat(document.getElementById('opt-blueDuration').value),
+          neutralDuration: parseFloat(document.getElementById('opt-neutralDuration').value)
+        }
+      };
+    }
+
+    function midiNoteName(midi) {
+      var names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+      var octave = Math.floor(midi / 12) - 1;
+      return names[midi % 12] + octave;
+    }
+
+    function generateCode(opts) {
+      var audio = opts.audio;
+      var lines = [];
+      lines.push('const player = new FloatImgPlay({');
+      lines.push("  selector: '.float-imgplay',");
+      if (opts.autoplay) lines.push('  autoplay: true,');
+      if (!opts.autoplayWhenVisibleOnly) lines.push('  autoplayWhenVisibleOnly: false,');
+      if (!opts.stopWhenHidden) lines.push('  stopWhenHidden: false,');
+      if (!opts.showPlayOverlay) lines.push('  showPlayOverlay: false,');
+      if (!opts.showVolumeControl) lines.push('  showVolumeControl: false,');
+      if (opts.visibilityThreshold !== 0.25) lines.push('  visibilityThreshold: ' + opts.visibilityThreshold + ',');
+      if (opts.zIndexUI !== 12) lines.push('  zIndexUI: ' + opts.zIndexUI + ',');
+
+      lines.push('  audio: {');
+      if (audio.masterVolume !== 0.25) lines.push('    masterVolume: ' + audio.masterVolume + ',');
+      if (audio.pitchShiftSemitones !== 0) lines.push('    pitchShiftSemitones: ' + audio.pitchShiftSemitones + ',');
+      if (audio.waveform !== 'triangle') lines.push("    waveform: '" + audio.waveform + "',");
+      if (audio.tempo !== 100) lines.push('    tempo: ' + audio.tempo + ',');
+      if (audio.noteDurationBeats !== 0.5) lines.push('    noteDurationBeats: ' + audio.noteDurationBeats + ',');
+      if (audio.restThreshold !== 28) lines.push('    restThreshold: ' + audio.restThreshold + ',');
+      if (audio.sampleColumns !== 24) lines.push('    sampleColumns: ' + audio.sampleColumns + ',');
+      if (audio.filterType !== 'lowpass') lines.push("    filterType: '" + audio.filterType + "',");
+      if (audio.filterBaseHz !== 900) lines.push('    filterBaseHz: ' + audio.filterBaseHz + ',');
+      if (audio.filterVelocityAmount !== 3000) lines.push('    filterVelocityAmount: ' + audio.filterVelocityAmount + ',');
+      if (audio.attack !== 0.02) lines.push('    attack: ' + audio.attack + ',');
+      if (audio.release !== 0.03) lines.push('    release: ' + audio.release + ',');
+      if (audio.scaleMode !== 'auto') lines.push("    scaleMode: '" + audio.scaleMode + "',");
+      if (audio.rootMode !== 'filename-first-char') lines.push("    rootMode: '" + audio.rootMode + "',");
+      if (audio.fixedRootMidi !== 60) lines.push('    fixedRootMidi: ' + audio.fixedRootMidi + ',');
+      if (audio.octaveContrastThreshold !== 100) lines.push('    octaveContrastThreshold: ' + audio.octaveContrastThreshold + ',');
+      if (audio.octaveShiftSemitones !== 12) lines.push('    octaveShiftSemitones: ' + audio.octaveShiftSemitones + ',');
+      if (audio.brightDuration !== 0.26) lines.push('    brightDuration: ' + audio.brightDuration + ',');
+      if (audio.blueDuration !== 0.46) lines.push('    blueDuration: ' + audio.blueDuration + ',');
+      if (audio.neutralDuration !== 0.34) lines.push('    neutralDuration: ' + audio.neutralDuration + ',');
+      lines.push('  }');
+      lines.push('});');
+      lines.push('player.init();');
+      return lines.join('\n');
+    }
+
+    function updateGeneratedCode() {
+      var opts = getOptionsFromUI();
+      document.getElementById('generated-code').textContent = generateCode(opts);
+    }
+
+    function initPlayer() {
+      if (player) {
+        player.destroy();
+        // Remove leftover UI
+        document.querySelectorAll('.float-imgplay .float-imgplay-ui').forEach(function(el) {
+          el.parentNode.removeChild(el);
+        });
+        document.querySelectorAll('.float-imgplay').forEach(function(el) {
+          el.classList.remove('float-imgplay--ready', 'float-imgplay--playing', 'float-imgplay--paused');
+        });
+      }
+      var opts = getOptionsFromUI();
+      player = new FloatImgPlay.FloatImgPlay(opts);
+      player.init();
+      updateGeneratedCode();
+    }
+
+    function resetDefaults() {
+      document.getElementById('opt-autoplay').checked = false;
+      document.getElementById('opt-autoplayWhenVisibleOnly').checked = true;
+      document.getElementById('opt-stopWhenHidden').checked = true;
+      document.getElementById('opt-showPlayOverlay').checked = true;
+      document.getElementById('opt-showVolumeControl').checked = true;
+      document.getElementById('opt-visibilityThreshold').value = '0.25';
+      document.getElementById('opt-zIndexUI').value = '12';
+      document.getElementById('opt-masterVolume').value = '0.25';
+      document.getElementById('opt-pitchShiftSemitones').value = '0';
+      document.getElementById('opt-waveform').value = 'triangle';
+      document.getElementById('opt-tempo').value = '100';
+      document.getElementById('opt-noteDurationBeats').value = '0.5';
+      document.getElementById('opt-restThreshold').value = '28';
+      document.getElementById('opt-sampleColumns').value = '24';
+      document.getElementById('opt-filterType').value = 'lowpass';
+      document.getElementById('opt-filterBaseHz').value = '900';
+      document.getElementById('opt-filterVelocityAmount').value = '3000';
+      document.getElementById('opt-attack').value = '0.02';
+      document.getElementById('opt-release').value = '0.03';
+      document.getElementById('opt-scaleMode').value = 'auto';
+      document.getElementById('opt-rootMode').value = 'filename-first-char';
+      document.getElementById('opt-fixedRootMidi').value = '60';
+      document.getElementById('opt-octaveContrastThreshold').value = '100';
+      document.getElementById('opt-octaveShiftSemitones').value = '12';
+      document.getElementById('opt-brightDuration').value = '0.26';
+      document.getElementById('opt-blueDuration').value = '0.46';
+      document.getElementById('opt-neutralDuration').value = '0.34';
+      updateAllValueDisplays();
+      initPlayer();
+    }
+
+    // --- Range value displays ---
+    var rangeIds = [
+      'visibilityThreshold', 'masterVolume', 'pitchShiftSemitones', 'tempo',
+      'noteDurationBeats', 'restThreshold', 'sampleColumns', 'filterBaseHz',
+      'filterVelocityAmount', 'attack', 'release', 'fixedRootMidi',
+      'octaveContrastThreshold', 'octaveShiftSemitones',
+      'brightDuration', 'blueDuration', 'neutralDuration'
+    ];
+
+    function updateAllValueDisplays() {
+      rangeIds.forEach(function(id) {
+        var input = document.getElementById('opt-' + id);
+        var display = document.getElementById('val-' + id);
+        if (input && display) {
+          var v = input.value;
+          if (id === 'fixedRootMidi') {
+            v = v + ' (' + midiNoteName(parseInt(v, 10)) + ')';
+          }
+          display.textContent = v;
+        }
+      });
+    }
+
+    rangeIds.forEach(function(id) {
+      var input = document.getElementById('opt-' + id);
+      if (input) {
+        input.addEventListener('input', function() {
+          var display = document.getElementById('val-' + id);
+          if (display) {
+            var v = input.value;
+            if (id === 'fixedRootMidi') {
+              v = v + ' (' + midiNoteName(parseInt(v, 10)) + ')';
+            }
+            display.textContent = v;
+          }
+          updateGeneratedCode();
+        });
+      }
+    });
+
+    // Checkboxes & selects also update generated code
+    ['opt-autoplay', 'opt-autoplayWhenVisibleOnly', 'opt-stopWhenHidden',
+     'opt-showPlayOverlay', 'opt-showVolumeControl'].forEach(function(id) {
+      document.getElementById(id).addEventListener('change', updateGeneratedCode);
+    });
+    ['opt-waveform', 'opt-filterType', 'opt-scaleMode', 'opt-rootMode'].forEach(function(id) {
+      document.getElementById(id).addEventListener('change', updateGeneratedCode);
+    });
+    document.getElementById('opt-zIndexUI').addEventListener('input', updateGeneratedCode);
+
+    // --- Buttons ---
+    document.getElementById('btn-apply').addEventListener('click', initPlayer);
+    document.getElementById('btn-reset').addEventListener('click', resetDefaults);
+    document.getElementById('btn-stop-all').addEventListener('click', function() {
+      if (player) {
+        player.instances.forEach(function(inst) {
+          player.stop(inst.el);
+        });
+      }
+    });
+
+    // --- API buttons ---
+    document.getElementById('api-play-first').addEventListener('click', function() {
+      if (player) player.play(document.getElementById('demo-sky'));
+    });
+    document.getElementById('api-stop-first').addEventListener('click', function() {
+      if (player) player.stop(document.getElementById('demo-sky'));
+    });
+    document.getElementById('api-refresh').addEventListener('click', function() {
+      if (player) player.refresh();
+    });
+    document.getElementById('api-destroy').addEventListener('click', function() {
+      if (player) player.destroy();
+    });
+    document.getElementById('api-reinit').addEventListener('click', function() {
+      initPlayer();
+    });
+
+    // --- Tabs ---
+    document.querySelectorAll('.tab').forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+        document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+      });
+    });
+
+    // --- Copy buttons ---
+    document.querySelectorAll('.copy-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var targetId = btn.dataset.target;
+        var block = btn.closest('.code-block');
+        var text = block.textContent.replace('Copy', '').trim();
+        navigator.clipboard.writeText(text).then(function() {
+          btn.textContent = 'Copied!';
+          setTimeout(function() { btn.textContent = 'Copy'; }, 1500);
+        });
+      });
+    });
+
+    // --- Init ---
+    initPlayer();
   </script>
 
 </body>

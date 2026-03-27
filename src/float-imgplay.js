@@ -11,11 +11,14 @@ import { AudioEngine } from "./engines/audio-engine.js";
 import { MetaParser } from "./parsers/meta-parser.js";
 import { MidiExport } from "./export/midi-export.js";
 import { MetaEmbed } from "./embed/meta-embed.js";
+import { INSTRUMENT_PRESETS, ENSEMBLE_PRESETS, resolveInstrument, resolveEnsemble } from "./instruments/presets.js";
 export { ImageEngine, MidiEngine, AudioEngine, MetaParser, MidiExport, MetaEmbed };
+export { INSTRUMENT_PRESETS, ENSEMBLE_PRESETS, resolveInstrument, resolveEnsemble };
 
 export class FloatImgPlay {
   constructor(options = {}) {
     this.options = mergeDeep(this._defaults(), options);
+    this._resolveInstruments();
     this.instances = new Map();
     this.audioCtx = null;
     this.globalUnlocked = false;
@@ -228,6 +231,29 @@ export class FloatImgPlay {
         allowedMimeTypes: ["image/png", "image/jpeg", "image/webp", "image/gif"]
       }
     };
+  }
+
+  // --- Instrument Resolution ---
+
+  _resolveInstruments() {
+    const opts = this.options;
+
+    // Priority: ensemble > instruments > audio (single, backward compat)
+    if (opts.ensemble) {
+      try {
+        opts.audio._instruments = resolveEnsemble(opts.ensemble);
+      } catch {
+        opts.audio._instruments = null;
+      }
+    } else if (opts.instruments && opts.instruments.length > 0) {
+      try {
+        opts.audio._instruments = opts.instruments.map(resolveInstrument);
+      } catch {
+        opts.audio._instruments = null;
+      }
+    } else {
+      opts.audio._instruments = null;
+    }
   }
 
   // --- Security ---

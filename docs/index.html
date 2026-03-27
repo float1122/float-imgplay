@@ -205,60 +205,48 @@
       </div>
     </div>
 
-    <!-- ============ SOUND PRESETS ============ -->
+    <!-- ============ INSTRUMENT PRESETS ============ -->
     <div class="section">
-      <h2>Sound Presets <span>Click a preset, then play any image</span></h2>
-      <div class="presets-grid" id="presets-grid">
-        <div class="preset-card active" data-preset="default">
-          <div class="preset-icon">&#127925;</div>
-          <div class="preset-name">Default</div>
-          <div class="preset-desc">Triangle, 100 BPM</div>
-        </div>
-        <div class="preset-card" data-preset="ambient">
-          <div class="preset-icon">&#127752;</div>
-          <div class="preset-name">Ambient</div>
-          <div class="preset-desc">Slow, dreamy pads</div>
-        </div>
-        <div class="preset-card" data-preset="chiptune">
-          <div class="preset-icon">&#127918;</div>
-          <div class="preset-name">Chiptune</div>
-          <div class="preset-desc">8-bit retro game</div>
-        </div>
-        <div class="preset-card" data-preset="techno">
-          <div class="preset-icon">&#128165;</div>
-          <div class="preset-name">Techno</div>
-          <div class="preset-desc">Fast, aggressive</div>
-        </div>
-        <div class="preset-card" data-preset="jazz">
-          <div class="preset-icon">&#127927;</div>
-          <div class="preset-name">Jazz</div>
-          <div class="preset-desc">Smooth minor scale</div>
-        </div>
-        <div class="preset-card" data-preset="cinematic">
-          <div class="preset-icon">&#127916;</div>
-          <div class="preset-name">Cinematic</div>
-          <div class="preset-desc">Epic, wide filter</div>
-        </div>
-        <div class="preset-card" data-preset="lofi">
-          <div class="preset-icon">&#9749;</div>
-          <div class="preset-name">Lo-Fi</div>
-          <div class="preset-desc">Warm, mellow beats</div>
-        </div>
-        <div class="preset-card" data-preset="bright">
-          <div class="preset-icon">&#9728;</div>
-          <div class="preset-name">Bright</div>
-          <div class="preset-desc">Major, cheerful</div>
-        </div>
-        <div class="preset-card" data-preset="dark">
-          <div class="preset-icon">&#127769;</div>
-          <div class="preset-name">Dark</div>
-          <div class="preset-desc">Minor, low register</div>
-        </div>
-        <div class="preset-card" data-preset="minimal">
-          <div class="preset-icon">&#9679;</div>
-          <div class="preset-name">Minimal</div>
-          <div class="preset-desc">Sparse, quiet sine</div>
-        </div>
+      <h2>Instruments <span>Single instrument — click to apply</span></h2>
+      <div class="presets-grid" id="instrument-grid">
+        <div class="preset-card active" data-instrument="none"><div class="preset-icon">&#127925;</div><div class="preset-name">Default</div><div class="preset-desc">Basic triangle</div></div>
+        <div class="preset-card" data-instrument="piano"><div class="preset-icon">&#127929;</div><div class="preset-name">Piano</div><div class="preset-desc">Warm triangle</div></div>
+        <div class="preset-card" data-instrument="epiano"><div class="preset-icon">&#127928;</div><div class="preset-name">E.Piano</div><div class="preset-desc">Soft sine</div></div>
+        <div class="preset-card" data-instrument="organ"><div class="preset-icon">&#9835;</div><div class="preset-name">Organ</div><div class="preset-desc">Full square</div></div>
+        <div class="preset-card" data-instrument="synthLead"><div class="preset-icon">&#9889;</div><div class="preset-name">Synth Lead</div><div class="preset-desc">Sharp sawtooth</div></div>
+        <div class="preset-card" data-instrument="synthPad"><div class="preset-icon">&#127752;</div><div class="preset-name">Synth Pad</div><div class="preset-desc">Wide sine pad</div></div>
+        <div class="preset-card" data-instrument="bass"><div class="preset-icon">&#128266;</div><div class="preset-name">Bass</div><div class="preset-desc">Low square</div></div>
+        <div class="preset-card" data-instrument="subBass"><div class="preset-icon">&#128165;</div><div class="preset-name">Sub Bass</div><div class="preset-desc">Deep sine</div></div>
+        <div class="preset-card" data-instrument="pluck"><div class="preset-icon">&#127930;</div><div class="preset-name">Pluck</div><div class="preset-desc">Short triangle</div></div>
+        <div class="preset-card" data-instrument="strings"><div class="preset-icon">&#127931;</div><div class="preset-name">Strings</div><div class="preset-desc">Sawtooth legato</div></div>
+        <div class="preset-card" data-instrument="brass"><div class="preset-icon">&#127930;</div><div class="preset-name">Brass</div><div class="preset-desc">Bold sawtooth</div></div>
+        <div class="preset-card" data-instrument="flute"><div class="preset-icon">&#127926;</div><div class="preset-name">Flute</div><div class="preset-desc">Clear sine +1oct</div></div>
+        <div class="preset-card" data-instrument="choir"><div class="preset-icon">&#128100;</div><div class="preset-name">Choir</div><div class="preset-desc">Soft triangle pad</div></div>
+        <div class="preset-card" data-instrument="bell"><div class="preset-icon">&#128276;</div><div class="preset-name">Bell</div><div class="preset-desc">Bright sine +1oct</div></div>
+        <div class="preset-card" data-instrument="marimba"><div class="preset-icon">&#129685;</div><div class="preset-name">Marimba</div><div class="preset-desc">Bandpass triangle</div></div>
+        <div class="preset-card" data-instrument="guitar"><div class="preset-icon">&#127928;</div><div class="preset-name">Guitar</div><div class="preset-desc">Sawtooth pluck</div></div>
+        <div class="preset-card" data-instrument="acid"><div class="preset-icon">&#129514;</div><div class="preset-name">Acid</div><div class="preset-desc">TB-303 style</div></div>
+        <div class="preset-card" data-instrument="chiptune"><div class="preset-icon">&#127918;</div><div class="preset-name">Chiptune</div><div class="preset-desc">8-bit square</div></div>
+        <div class="preset-card" data-instrument="warmPad"><div class="preset-icon">&#9728;</div><div class="preset-name">Warm Pad</div><div class="preset-desc">Cozy triangle</div></div>
+        <div class="preset-card" data-instrument="glass"><div class="preset-icon">&#128142;</div><div class="preset-name">Glass</div><div class="preset-desc">Ethereal sine</div></div>
+        <div class="preset-card" data-instrument="wobble"><div class="preset-icon">&#127754;</div><div class="preset-name">Wobble</div><div class="preset-desc">LFO-like saw</div></div>
+      </div>
+    </div>
+
+    <!-- ============ ENSEMBLE PRESETS ============ -->
+    <div class="section">
+      <h2>Ensembles <span>Multi-instrument — multiple voices play together</span></h2>
+      <div class="presets-grid" id="ensemble-grid">
+        <div class="preset-card" data-ensemble="orchestra"><div class="preset-icon">&#127932;</div><div class="preset-name">Orchestra</div><div class="preset-desc">Strings + Brass + Flute</div></div>
+        <div class="preset-card" data-ensemble="rockBand"><div class="preset-icon">&#127928;</div><div class="preset-name">Rock Band</div><div class="preset-desc">Guitar + Bass + Organ</div></div>
+        <div class="preset-card" data-ensemble="electronic"><div class="preset-icon">&#128187;</div><div class="preset-name">Electronic</div><div class="preset-desc">Lead + SubBass + Pad</div></div>
+        <div class="preset-card" data-ensemble="jazzTrio"><div class="preset-icon">&#127927;</div><div class="preset-name">Jazz Trio</div><div class="preset-desc">E.Piano + Bass + Pluck</div></div>
+        <div class="preset-card" data-ensemble="ambient"><div class="preset-icon">&#127752;</div><div class="preset-name">Ambient</div><div class="preset-desc">WarmPad + Glass + Choir</div></div>
+        <div class="preset-card" data-ensemble="chiptuneBand"><div class="preset-icon">&#127918;</div><div class="preset-name">Chiptune Band</div><div class="preset-desc">Chip + ChipBass + Bell</div></div>
+        <div class="preset-card" data-ensemble="cinematic"><div class="preset-icon">&#127916;</div><div class="preset-name">Cinematic</div><div class="preset-desc">Strings + Choir + SubBass</div></div>
+        <div class="preset-card" data-ensemble="lofi"><div class="preset-icon">&#9749;</div><div class="preset-name">Lo-Fi</div><div class="preset-desc">E.Piano + WarmPad + Pluck</div></div>
+        <div class="preset-card" data-ensemble="acidHouse"><div class="preset-icon">&#129514;</div><div class="preset-name">Acid House</div><div class="preset-desc">Acid + SubBass + Pad</div></div>
+        <div class="preset-card" data-ensemble="minimal"><div class="preset-icon">&#9679;</div><div class="preset-name">Minimal</div><div class="preset-desc">Piano + Bell</div></div>
       </div>
     </div>
 
@@ -714,36 +702,57 @@ player.<span class="fn">destroy</span>();
       <div class="tab-content" id="tab-v2">
         <div class="code-block">
           <button class="copy-btn" data-target="tab-v2">Copy</button>
-<span class="kw">import</span> { <span class="fn">FloatImgPlay</span>, <span class="fn">MidiExport</span>, <span class="fn">MetaParser</span> } <span class="kw">from</span> <span class="str">'float-imgplay'</span>;
+<span class="kw">import</span> { <span class="fn">FloatImgPlay</span> } <span class="kw">from</span> <span class="str">'float-imgplay'</span>;
+
+<span class="cm">// --- Single Instrument ---</span>
+<span class="kw">const</span> pianoPlayer = <span class="kw">new</span> <span class="fn">FloatImgPlay</span>({
+  <span class="prop">selector</span>: <span class="str">'.float-imgplay'</span>,
+  <span class="prop">instruments</span>: [{ <span class="prop">preset</span>: <span class="str">'piano'</span> }]
+});
+pianoPlayer.<span class="fn">init</span>();
+
+<span class="cm">// --- Ensemble Preset (multi-instrument) ---</span>
+<span class="kw">const</span> orchestraPlayer = <span class="kw">new</span> <span class="fn">FloatImgPlay</span>({
+  <span class="prop">selector</span>: <span class="str">'.float-imgplay'</span>,
+  <span class="prop">ensemble</span>: <span class="str">'orchestra'</span>  <span class="cm">// Strings + Brass + Flute</span>
+});
+orchestraPlayer.<span class="fn">init</span>();
+
+<span class="cm">// --- Custom Multi-Instrument ---</span>
+<span class="kw">const</span> customPlayer = <span class="kw">new</span> <span class="fn">FloatImgPlay</span>({
+  <span class="prop">selector</span>: <span class="str">'.float-imgplay'</span>,
+  <span class="prop">instruments</span>: [
+    { <span class="prop">preset</span>: <span class="str">'piano'</span>, <span class="prop">volume</span>: <span class="num">0.25</span> },
+    { <span class="prop">preset</span>: <span class="str">'bass'</span>, <span class="prop">volume</span>: <span class="num">0.2</span> },
+    { <span class="prop">preset</span>: <span class="str">'bell'</span>, <span class="prop">volume</span>: <span class="num">0.1</span> }
+  ]
+});
+customPlayer.<span class="fn">init</span>();
+
+<span class="cm">// --- Available Instrument Presets (20) ---</span>
+<span class="cm">// piano, epiano, organ, synthLead, synthPad, bass, subBass,</span>
+<span class="cm">// pluck, strings, brass, flute, choir, bell, marimba, guitar,</span>
+<span class="cm">// acid, chiptune, warmPad, glass, wobble</span>
+
+<span class="cm">// --- Available Ensemble Presets (10) ---</span>
+<span class="cm">// orchestra, rockBand, electronic, jazzTrio, ambient,</span>
+<span class="cm">// chiptuneBand, cinematic, lofi, acidHouse, minimal</span>
 
 <span class="cm">// --- MIDI Export ---</span>
-<span class="kw">const</span> player = <span class="kw">new</span> <span class="fn">FloatImgPlay</span>({ <span class="prop">selector</span>: <span class="str">'.float-imgplay'</span> });
-player.<span class="fn">init</span>();
-
-<span class="cm">// Get score from an instance and export as MIDI</span>
 <span class="kw">const</span> inst = player.instances.<span class="fn">get</span>(someElement);
 <span class="kw">if</span> (inst &amp;&amp; inst.currentScore) {
-  <span class="fn">MidiExport</span>.<span class="fn">exportAndDownload</span>(
+  FloatImgPlay.<span class="fn">MidiExport</span>.<span class="fn">exportAndDownload</span>(
     inst.currentScore, { <span class="prop">bpm</span>: <span class="num">120</span> }, <span class="str">'my-image.mid'</span>
   );
 }
 
-<span class="cm">// --- Embedded Metadata (PNG tEXt / EXIF / Sidecar JSON) ---</span>
-<span class="cm">// Images with embedded imgplay metadata auto-switch engines:</span>
-<span class="cm">// - meta.midi present  &rarr; MIDI Engine (parses &amp; plays MIDI)</span>
-<span class="cm">// - meta.audio present &rarr; Audio Engine (streams mp3/wav)</span>
-<span class="cm">// - no meta            &rarr; Image Engine (pixel analysis)</span>
-
-<span class="cm">// Sidecar JSON example: place next to image as image.jpg.imgplay.json</span>
-<span class="cm">// { "imgplay": { "midi": { "url": "/songs/track.mid" } } }</span>
-
 <span class="cm">// --- Security Options ---</span>
 <span class="kw">const</span> securePlayer = <span class="kw">new</span> <span class="fn">FloatImgPlay</span>({
   <span class="prop">selector</span>: <span class="str">'.float-imgplay'</span>,
+  <span class="prop">ensemble</span>: <span class="str">'cinematic'</span>,
   <span class="prop">security</span>: {
-    <span class="prop">allowedDomains</span>: [<span class="str">'cdn.example.com'</span>, <span class="str">'img.example.com'</span>],
-    <span class="prop">maxFileSize</span>: <span class="num">5242880</span>,  <span class="cm">// 5MB</span>
-    <span class="prop">allowedMimeTypes</span>: [<span class="str">'image/png'</span>, <span class="str">'image/jpeg'</span>]
+    <span class="prop">allowedDomains</span>: [<span class="str">'cdn.example.com'</span>],
+    <span class="prop">maxFileSize</span>: <span class="num">5242880</span>  <span class="cm">// 5MB</span>
   }
 });
 securePlayer.<span class="fn">init</span>();
@@ -768,6 +777,15 @@ securePlayer.<span class="fn">init</span>();
   <span class="prop">overlayPlayText</span>: <span class="str">''</span>,              <span class="cm">// Optional text next to play icon</span>
   <span class="prop">visibilityThreshold</span>: <span class="num">0.25</span>,        <span class="cm">// IntersectionObserver threshold (0-1)</span>
   <span class="prop">zIndexUI</span>: <span class="num">12</span>,                      <span class="cm">// z-index for UI overlay</span>
+
+  <span class="cm">// --- Instruments (v2) ---</span>
+  <span class="prop">ensemble</span>: <span class="str">'orchestra'</span>,              <span class="cm">// Ensemble preset name (overrides instruments)</span>
+  <span class="cm">// OR</span>
+  <span class="prop">instruments</span>: [                       <span class="cm">// Array of instrument configs</span>
+    { <span class="prop">preset</span>: <span class="str">'piano'</span>, <span class="prop">volume</span>: <span class="num">0.25</span> },
+    { <span class="prop">preset</span>: <span class="str">'bass'</span> },
+    { <span class="prop">waveform</span>: <span class="str">'sine'</span>, <span class="prop">octaveShift</span>: <span class="num">1</span>, <span class="prop">volume</span>: <span class="num">0.1</span> }  <span class="cm">// custom</span>
+  ],
 
   <span class="cm">// --- Audio ---</span>
   <span class="prop">audio</span>: {
@@ -879,6 +897,13 @@ securePlayer.<span class="fn">init</span>();
       if (opts.visibilityThreshold !== 0.25) lines.push('  visibilityThreshold: ' + opts.visibilityThreshold + ',');
       if (opts.zIndexUI !== 12) lines.push('  zIndexUI: ' + opts.zIndexUI + ',');
 
+      // Instrument / Ensemble
+      if (currentEnsemble) {
+        lines.push("  ensemble: '" + currentEnsemble + "',");
+      } else if (currentInstrument) {
+        lines.push("  instruments: [{ preset: '" + currentInstrument + "' }],");
+      }
+
       if ((sec.allowedDomains && sec.allowedDomains.length > 0) || (sec.maxFileSize && sec.maxFileSize !== 10485760)) {
         lines.push('  security: {');
         if (sec.allowedDomains && sec.allowedDomains.length > 0) {
@@ -934,6 +959,14 @@ securePlayer.<span class="fn">init</span>();
         });
       }
       var opts = getOptionsFromUI();
+
+      // Add instrument/ensemble selection
+      if (currentEnsemble) {
+        opts.ensemble = currentEnsemble;
+      } else if (currentInstrument) {
+        opts.instruments = [{ preset: currentInstrument }];
+      }
+
       player = new FloatImgPlay.FloatImgPlay(opts);
       player.init();
       updateGeneratedCode();
@@ -1117,129 +1150,49 @@ securePlayer.<span class="fn">init</span>();
       status.textContent = count > 0 ? 'Exported ' + count + ' MIDI file(s)' : 'No scores available. Play images first.';
     });
 
-    // --- Sound Presets ---
-    var PRESETS = {
-      default: {
-        waveform: 'triangle', tempo: 100, masterVolume: 0.25, scaleMode: 'auto',
-        filterType: 'lowpass', filterBaseHz: 900, filterVelocityAmount: 3000,
-        attack: 0.02, release: 0.03, pitchShiftSemitones: 0, noteDurationBeats: 0.5,
-        restThreshold: 28, sampleColumns: 24,
-        octaveContrastThreshold: 100, octaveShiftSemitones: 12,
-        brightDuration: 0.26, blueDuration: 0.46, neutralDuration: 0.34
-      },
-      ambient: {
-        waveform: 'sine', tempo: 56, masterVolume: 0.2, scaleMode: 'pentatonic',
-        filterType: 'lowpass', filterBaseHz: 600, filterVelocityAmount: 1200,
-        attack: 0.15, release: 0.3, pitchShiftSemitones: 0, noteDurationBeats: 1.2,
-        restThreshold: 20, sampleColumns: 16,
-        octaveContrastThreshold: 120, octaveShiftSemitones: 12,
-        brightDuration: 0.5, blueDuration: 0.8, neutralDuration: 0.6
-      },
-      chiptune: {
-        waveform: 'square', tempo: 160, masterVolume: 0.18, scaleMode: 'major',
-        filterType: 'highpass', filterBaseHz: 200, filterVelocityAmount: 5000,
-        attack: 0.005, release: 0.01, pitchShiftSemitones: 12, noteDurationBeats: 0.25,
-        restThreshold: 35, sampleColumns: 32,
-        octaveContrastThreshold: 80, octaveShiftSemitones: 12,
-        brightDuration: 0.15, blueDuration: 0.2, neutralDuration: 0.18
-      },
-      techno: {
-        waveform: 'sawtooth', tempo: 138, masterVolume: 0.22, scaleMode: 'minor',
-        filterType: 'lowpass', filterBaseHz: 400, filterVelocityAmount: 6000,
-        attack: 0.005, release: 0.02, pitchShiftSemitones: -12, noteDurationBeats: 0.25,
-        restThreshold: 40, sampleColumns: 32,
-        octaveContrastThreshold: 60, octaveShiftSemitones: 24,
-        brightDuration: 0.12, blueDuration: 0.18, neutralDuration: 0.15
-      },
-      jazz: {
-        waveform: 'triangle', tempo: 88, masterVolume: 0.28, scaleMode: 'minor',
-        filterType: 'lowpass', filterBaseHz: 1200, filterVelocityAmount: 2500,
-        attack: 0.03, release: 0.08, pitchShiftSemitones: -5, noteDurationBeats: 0.6,
-        restThreshold: 22, sampleColumns: 20,
-        octaveContrastThreshold: 90, octaveShiftSemitones: 12,
-        brightDuration: 0.3, blueDuration: 0.55, neutralDuration: 0.4
-      },
-      cinematic: {
-        waveform: 'sawtooth', tempo: 72, masterVolume: 0.3, scaleMode: 'minor',
-        filterType: 'lowpass', filterBaseHz: 500, filterVelocityAmount: 4000,
-        attack: 0.08, release: 0.2, pitchShiftSemitones: -7, noteDurationBeats: 0.8,
-        restThreshold: 15, sampleColumns: 16,
-        octaveContrastThreshold: 70, octaveShiftSemitones: 12,
-        brightDuration: 0.4, blueDuration: 0.7, neutralDuration: 0.55
-      },
-      lofi: {
-        waveform: 'triangle', tempo: 78, masterVolume: 0.2, scaleMode: 'pentatonic',
-        filterType: 'lowpass', filterBaseHz: 700, filterVelocityAmount: 1500,
-        attack: 0.04, release: 0.1, pitchShiftSemitones: -3, noteDurationBeats: 0.5,
-        restThreshold: 25, sampleColumns: 20,
-        octaveContrastThreshold: 110, octaveShiftSemitones: 12,
-        brightDuration: 0.3, blueDuration: 0.5, neutralDuration: 0.38
-      },
-      bright: {
-        waveform: 'sine', tempo: 120, masterVolume: 0.25, scaleMode: 'major',
-        filterType: 'lowpass', filterBaseHz: 2000, filterVelocityAmount: 4000,
-        attack: 0.01, release: 0.02, pitchShiftSemitones: 5, noteDurationBeats: 0.4,
-        restThreshold: 30, sampleColumns: 28,
-        octaveContrastThreshold: 90, octaveShiftSemitones: 12,
-        brightDuration: 0.2, blueDuration: 0.35, neutralDuration: 0.28
-      },
-      dark: {
-        waveform: 'sawtooth', tempo: 64, masterVolume: 0.22, scaleMode: 'minor',
-        filterType: 'lowpass', filterBaseHz: 350, filterVelocityAmount: 2000,
-        attack: 0.06, release: 0.15, pitchShiftSemitones: -12, noteDurationBeats: 0.7,
-        restThreshold: 18, sampleColumns: 16,
-        octaveContrastThreshold: 50, octaveShiftSemitones: 12,
-        brightDuration: 0.45, blueDuration: 0.7, neutralDuration: 0.55
-      },
-      minimal: {
-        waveform: 'sine', tempo: 90, masterVolume: 0.12, scaleMode: 'pentatonic',
-        filterType: 'lowpass', filterBaseHz: 1500, filterVelocityAmount: 1000,
-        attack: 0.03, release: 0.05, pitchShiftSemitones: 0, noteDurationBeats: 0.5,
-        restThreshold: 50, sampleColumns: 12,
-        octaveContrastThreshold: 130, octaveShiftSemitones: 12,
-        brightDuration: 0.22, blueDuration: 0.35, neutralDuration: 0.28
-      }
-    };
+    // --- Instrument / Ensemble Presets ---
+    var currentInstrument = null;  // null = default (no instrument override)
+    var currentEnsemble = null;    // null = no ensemble
 
-    var activePreset = 'default';
+    function applyInstrument(name) {
+      currentEnsemble = null;
+      currentInstrument = (name === 'none') ? null : name;
 
-    function applyPreset(name) {
-      var p = PRESETS[name];
-      if (!p) return;
-      activePreset = name;
-
-      // Update UI active state
-      document.querySelectorAll('.preset-card').forEach(function(card) {
-        card.classList.toggle('active', card.dataset.preset === name);
+      // Update UI active states
+      document.querySelectorAll('#instrument-grid .preset-card').forEach(function(card) {
+        card.classList.toggle('active', card.dataset.instrument === name);
+      });
+      document.querySelectorAll('#ensemble-grid .preset-card').forEach(function(card) {
+        card.classList.remove('active');
       });
 
-      // Apply preset values to settings UI
-      document.getElementById('opt-masterVolume').value = p.masterVolume;
-      document.getElementById('opt-pitchShiftSemitones').value = p.pitchShiftSemitones;
-      document.getElementById('opt-waveform').value = p.waveform;
-      document.getElementById('opt-tempo').value = p.tempo;
-      document.getElementById('opt-noteDurationBeats').value = p.noteDurationBeats;
-      document.getElementById('opt-restThreshold').value = p.restThreshold;
-      document.getElementById('opt-sampleColumns').value = p.sampleColumns;
-      document.getElementById('opt-filterType').value = p.filterType;
-      document.getElementById('opt-filterBaseHz').value = p.filterBaseHz;
-      document.getElementById('opt-filterVelocityAmount').value = p.filterVelocityAmount;
-      document.getElementById('opt-attack').value = p.attack;
-      document.getElementById('opt-release').value = p.release;
-      document.getElementById('opt-scaleMode').value = p.scaleMode;
-      document.getElementById('opt-octaveContrastThreshold').value = p.octaveContrastThreshold;
-      document.getElementById('opt-octaveShiftSemitones').value = p.octaveShiftSemitones;
-      document.getElementById('opt-brightDuration').value = p.brightDuration;
-      document.getElementById('opt-blueDuration').value = p.blueDuration;
-      document.getElementById('opt-neutralDuration').value = p.neutralDuration;
-
-      updateAllValueDisplays();
       initPlayer();
     }
 
-    document.querySelectorAll('.preset-card').forEach(function(card) {
+    function applyEnsemble(name) {
+      currentInstrument = null;
+      currentEnsemble = name;
+
+      // Update UI active states
+      document.querySelectorAll('#instrument-grid .preset-card').forEach(function(card) {
+        card.classList.toggle('active', card.dataset.instrument === 'none' ? false : false);
+      });
+      document.querySelectorAll('#ensemble-grid .preset-card').forEach(function(card) {
+        card.classList.toggle('active', card.dataset.ensemble === name);
+      });
+
+      initPlayer();
+    }
+
+    document.querySelectorAll('#instrument-grid .preset-card').forEach(function(card) {
       card.addEventListener('click', function() {
-        applyPreset(card.dataset.preset);
+        applyInstrument(card.dataset.instrument);
+      });
+    });
+
+    document.querySelectorAll('#ensemble-grid .preset-card').forEach(function(card) {
+      card.addEventListener('click', function() {
+        applyEnsemble(card.dataset.ensemble);
       });
     });
 

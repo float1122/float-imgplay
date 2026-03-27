@@ -10,29 +10,74 @@ export class ImageEngine {
 
   async analyze(source, audioOpts) {
     const img = await this._loadImage(source.url);
+
+    // Multi-instrument mode
+    if (audioOpts._instruments && audioOpts._instruments.length > 0) {
+      return this._analyzeMultiLayer(img, source.fileName, audioOpts);
+    }
+
     return this._analyzeImage(img, source.fileName, audioOpts);
   }
 
+  _analyzeMultiLayer(img, fileName, audioOpts) {
+    const layers = [];
+
+    for (const inst of audioOpts._instruments) {
+      // Merge instrument settings into audioOpts for each layer analysis
+      const layerOpts = {
+        ...audioOpts,
+        sampleRows: inst.sampleRows || audioOpts.sampleRows,
+        pitchShiftSemitones: (audioOpts.pitchShiftSemitones || 0) + (inst.octaveShift || 0) * 12
+      };
+
+      const result = this._analyzeImage(img, fileName, layerOpts);
+
+      layers.push({
+        instrument: inst,
+        notes: result.score
+      });
+    }
+
+    // Use the meta from first layer
+    const firstResult = this._analyzeImage(img, fileName, audioOpts);
+
+    return {
+      meta: firstResult.meta,
+      score: { layers }
+    };
+  }
+
   play(score, audioCtx, audioOpts) {
+    // Multi-layer score: { layers: [ { instrument, notes }, ... ] }
+    // Single-layer score: plain array of notes (backward compatible)
+    if (score && score.layers) {
+      return this._playMultiLayer(score, audioCtx, audioOpts);
+    }
+    return this._playSingleLayer(score, audioCtx, audioOpts);
+  }
+
+  _playSingleLayer(notes, audioCtx, audioOpts, instOverride) {
     const now = audioCtx.currentTime + 0.03;
     let t = now;
-    const nodes = [];
-    const timers = [];
+    const allNodes = [];
 
-    // Group notes: primary notes advance time, chord/echo notes
-    // (shorter duration, lower velocity) play at the same time
+    const wf = (instOverride && instOverride.waveform) || audioOpts.waveform;
+    const ft = (instOverride && instOverride.filterType) || audioOpts.filterType;
+    const fb = (instOverride && instOverride.filterBaseHz) || audioOpts.filterBaseHz;
+    const fv = (instOverride && instOverride.filterVelocityAmount) || audioOpts.filterVelocityAmount;
+    const att = (instOverride && instOverride.attack) || audioOpts.attack;
+    const rel = (instOverride && instOverride.release) || audioOpts.release;
+    const vol = (instOverride && instOverride.volume) || audioOpts.masterVolume;
+
     let i = 0;
-    while (i < score.length) {
-      const primary = score[i];
+    while (i < notes.length) {
+      const primary = notes[i];
       const primaryDur = primary.durationSeconds;
 
-      // Collect this primary + any following chord/echo notes
-      // Chord notes are shorter and quieter than the primary
       const group = [primary];
       let j = i + 1;
-      while (j < score.length) {
-        const candidate = score[j];
-        // A chord/echo note: shorter duration AND lower velocity than primary
+      while (j < notes.length) {
+        const candidate = notes[j];
         if (!primary.isRest && !candidate.isRest &&
             candidate.durationSeconds < primaryDur &&
             candidate.velocity < primary.velocity) {
@@ -43,29 +88,24 @@ export class ImageEngine {
         }
       }
 
-      // Schedule all notes in this group at time t
       for (const note of group) {
         if (!note.isRest) {
           const osc = audioCtx.createOscillator();
           const gain = audioCtx.createGain();
           const filter = audioCtx.createBiquadFilter();
 
-          osc.type = audioOpts.waveform;
+          osc.type = wf;
           osc.frequency.setValueAtTime(note.freq, t);
 
-          filter.type = audioOpts.filterType;
-          filter.frequency.setValueAtTime(
-            audioOpts.filterBaseHz + note.velocity * audioOpts.filterVelocityAmount, t
-          );
+          filter.type = ft;
+          filter.frequency.setValueAtTime(fb + note.velocity * fv, t);
 
           gain.gain.setValueAtTime(0.0001, t);
           gain.gain.exponentialRampToValueAtTime(
-            Math.max(0.0002, note.velocity * audioOpts.masterVolume),
-            t + audioOpts.attack
+            Math.max(0.0002, note.velocity * vol), t + att
           );
           gain.gain.exponentialRampToValueAtTime(
-            0.0001,
-            t + Math.max(audioOpts.attack + 0.01, note.durationSeconds)
+            0.0001, t + Math.max(att + 0.01, note.durationSeconds)
           );
 
           osc.connect(filter);
@@ -73,9 +113,9 @@ export class ImageEngine {
           gain.connect(audioCtx.destination);
 
           osc.start(t);
-          osc.stop(t + note.durationSeconds + audioOpts.release);
+          osc.stop(t + note.durationSeconds + rel);
 
-          nodes.push(osc, gain, filter);
+          allNodes.push(osc, gain, filter);
         }
       }
 
@@ -83,8 +123,20 @@ export class ImageEngine {
       i = j;
     }
 
-    const totalDuration = Math.max(0, t - now);
-    return { nodes, timers, totalDuration };
+    return { nodes: allNodes, timers: [], totalDuration: Math.max(0, t - (audioCtx.currentTime + 0.03)) };
+  }
+
+  _playMultiLayer(score, audioCtx, audioOpts) {
+    const allNodes = [];
+    let maxDuration = 0;
+
+    for (const layer of score.layers) {
+      const result = this._playSingleLayer(layer.notes, audioCtx, audioOpts, layer.instrument);
+      allNodes.push(...result.nodes);
+      if (result.totalDuration > maxDuration) maxDuration = result.totalDuration;
+    }
+
+    return { nodes: allNodes, timers: [], totalDuration: maxDuration };
   }
 
   stop(handle) {

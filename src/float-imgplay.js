@@ -161,6 +161,75 @@ export class FloatImgPlay {
     return this;
   }
 
+  exportConfig() {
+    const config = {
+      version: "2.0.0",
+      type: "float-imgplay-config",
+      audio: { ...this.options.audio },
+      instrument: null,
+      ensemble: null,
+      algorithm: this.options.audio.algorithm || "rgba-digit"
+    };
+
+    // Remove internal _instruments from export
+    delete config.audio._instruments;
+
+    if (this.options.ensemble) {
+      config.ensemble = this.options.ensemble;
+    } else if (this.options.instruments && this.options.instruments.length > 0) {
+      config.instrument = this.options.instruments;
+    }
+
+    return config;
+  }
+
+  importConfig(config) {
+    if (!config || config.type !== "float-imgplay-config") {
+      console.warn("[FloatImgPlay] Invalid config format");
+      return this;
+    }
+
+    // Apply audio settings
+    if (config.audio) {
+      Object.keys(config.audio).forEach((key) => {
+        if (key !== "_instruments") {
+          this.options.audio[key] = config.audio[key];
+        }
+      });
+    }
+
+    // Apply algorithm
+    if (config.algorithm) {
+      this.options.audio.algorithm = config.algorithm;
+    }
+
+    // Apply instrument/ensemble
+    if (config.ensemble) {
+      this.options.ensemble = config.ensemble;
+      this.options.instruments = null;
+    } else if (config.instrument) {
+      this.options.instruments = config.instrument;
+      this.options.ensemble = null;
+    }
+
+    // Re-resolve instruments
+    this._resolveInstruments();
+
+    // Re-analyze all instances
+    this.instances.forEach((inst) => {
+      inst.opts.audio = { ...this.options.audio };
+      if (this.options.audio._instruments) {
+        inst.opts.audio._instruments = this.options.audio._instruments;
+      }
+      this._stopInstance(inst);
+      inst.currentScore = null;
+      inst.currentMeta = null;
+      this._prepareAnalysis(inst);
+    });
+
+    return this;
+  }
+
   refresh() {
     this.instances.forEach((inst) => {
       inst.source = this._resolveSource(inst.el) || inst.source;
@@ -1244,6 +1313,38 @@ export class FloatImgPlay {
       return el ? this.instances.get(el) : null;
     }
     return null;
+  }
+
+  // --- Static: Config Export/Import ---
+
+  static downloadConfig(config, filename = "imgplay-preset.json") {
+    const json = JSON.stringify(config, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  static loadConfigFromFile(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const config = JSON.parse(e.target.result);
+          resolve(config);
+        } catch (err) {
+          reject(new Error("[FloatImgPlay] Invalid JSON: " + err.message));
+        }
+      };
+      reader.onerror = reject;
+      reader.readAsText(file);
+    });
   }
 }
 

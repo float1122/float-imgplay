@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FloatImgPlay - Basic Example</title>
+  <link rel="stylesheet" href="../dist/float-imgplay.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      padding: 40px 20px;
+    }
+    h1 { text-align: center; margin-bottom: 12px; font-size: 28px; color: #fff; }
+    p.subtitle { text-align: center; margin-bottom: 40px; color: #888; }
+    .demo-section {
+      max-width: 800px;
+      margin: 0 auto 48px;
+    }
+    .demo-section h2 {
+      font-size: 18px;
+      margin-bottom: 16px;
+      color: #aaa;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+    }
+    .float-imgplay {
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+    }
+  </style>
+</head>
+<body>
+
+  <h1>FloatImgPlay</h1>
+  <p class="subtitle">Click an image to hear its sound</p>
+
+  <div class="demo-section">
+    <h2>img tag examples</h2>
+    <div class="grid">
+      <div class="float-imgplay">
+        <img src="https://picsum.photos/seed/sky/320/320" alt="Sky" width="320" height="320">
+      </div>
+      <div class="float-imgplay">
+        <img src="https://picsum.photos/seed/forest/320/320" alt="Forest" width="320" height="320">
+      </div>
+      <div class="float-imgplay">
+        <img src="https://picsum.photos/seed/ocean/320/320" alt="Ocean" width="320" height="320">
+      </div>
+    </div>
+  </div>
+
+  <div class="demo-section">
+    <h2>background-image example</h2>
+    <div class="grid">
+      <div class="float-imgplay"
+           style="background-image:url('https://picsum.photos/seed/mountain/320/320'); width:320px; height:320px; background-size:cover; border-radius:12px;">
+      </div>
+    </div>
+  </div>
+
+  <script src="../dist/float-imgplay.iife.js"></script>
+  <script>
+    new FloatImgPlay.FloatImgPlay({
+      selector: '.float-imgplay'
+    }).init();
+  </script>
+
+</body>
+</html>

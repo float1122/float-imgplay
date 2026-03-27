@@ -104,6 +104,352 @@ var FloatImgPlay = (function (exports) {
     return m ? m[2] : null;
   }
 
+  function rgbaDigit(columns, audioOpts, meta) {
+    const { scale, rootMidi } = meta;
+
+    // --- Digit extraction helper ---
+    // value 0-255 → hundreds (0-2), tens (0-25→0-9 scaled), ones (0-9)
+    const digit = (val, place) => {
+      if (place === 100) return Math.floor(val / 100);          // 0, 1, or 2
+      if (place === 10) return Math.floor((val % 100) / 10);    // 0-9 (actually 0-25 but capped)
+      return val % 10;                                           // 0-9
+    };
+
+    // --- Rhythm pattern table (G hundreds) ---
+    const RHYTHM_MULTIPLIERS = [1.5, 1.0, 0.5];
+
+    // --- Chord intervals within key (B hundreds) ---
+    // 0 = single note, 1 = add 3rd, 2 = add 3rd+5th
+    const CHORD_TYPES = [
+      [],                              // 0: single note
+      [2],                             // 1: add a 3rd (2 scale steps up)
+      [2, 4]                           // 2: add 3rd + 5th (triad)
+    ];
+
+    // --- Articulation table (R ones) ---
+    // 0-3: staccato (short), 4-6: normal, 7-9: legato (long)
+    const articulationMul = (d) => {
+      if (d <= 3) return 0.5;
+      if (d <= 6) return 1.0;
+      return 1.4;
+    };
+
+    const notes = [];
+    let prevMidi = -1;
+
+    for (let i = 0; i < columns.length; i++) {
+      const c = columns[i];
+      const brightness = (c.r + c.g + c.b) / 3;
+      const saturation = Math.max(c.r, c.g, c.b) - Math.min(c.r, c.g, c.b);
+      const isRest = brightness < audioOpts.restThreshold;
+
+      if (isRest) {
+        // Dark pixels: ghost note (very quiet, short) instead of silence for variety
+        const ghostMidi = rootMidi + scale[0] + audioOpts.pitchShiftSemitones;
+        notes.push({
+          midi: ghostMidi,
+          freq: midiToFreq(ghostMidi),
+          durationSeconds: beatsToSeconds(0.15, audioOpts.tempo),
+          velocity: 0.04,
+          isRest: true
+        });
+        continue;
+      }
+
+      // === R channel: pitch + articulation ===
+      const rHundreds = digit(c.r, 100);   // octave: 0=low(-12), 1=mid(0), 2=high(+12)
+      const rTens = digit(c.r, 10);        // scale degree selector (0-9 → wraps through scale)
+      const rOnes = digit(c.r, 1);         // articulation (staccato/normal/legato)
+
+      // === G channel: rhythm + velocity ===
+      const gHundreds = digit(c.g, 100);   // rhythm pattern (whole/half/quarter)
+      const gTens = digit(c.g, 10);        // velocity level (0-9 → pp to ff)
+      digit(c.g, 1);         // filter cutoff variation
+
+      // === B channel: harmony + interval ===
+      const bHundreds = digit(c.b, 100);   // chord type (single/3rd/triad)
+      const bTens = digit(c.b, 10);        // melodic interval jump size
+      digit(c.b, 1);         // timing micro-offset (swing feel)
+
+      // === A channel: dynamics ===
+      const aTens = digit(c.a, 10);        // crescendo/decrescendo tendency
+
+      // --- Primary note pitch ---
+      const scaleIdx = rTens % scale.length;
+      const octaveOffset = (rHundreds - 1) * 12;  // -12, 0, or +12
+
+      // Melodic interval: if bTens is high, allow bigger jumps between notes
+      let intervalBoost = 0;
+      if (prevMidi >= 0 && bTens > 5) {
+        // Jump up or down by extra scale steps based on color difference from previous
+        const prevCol = columns[i - 1] || c;
+        const colorDiff = Math.abs(c.r - prevCol.r) + Math.abs(c.g - prevCol.g) + Math.abs(c.b - prevCol.b);
+        if (colorDiff > 100) {
+          intervalBoost = (bTens > 7) ? 2 : 1;
+          if (c.b > prevCol.b) intervalBoost = -intervalBoost; // direction from blue tendency
+        }
+      }
+
+      const finalScaleIdx = clamp(scaleIdx + intervalBoost, 0, scale.length - 1);
+      const midi = rootMidi + scale[finalScaleIdx] + octaveOffset + audioOpts.pitchShiftSemitones;
+      prevMidi = midi;
+
+      // --- Duration ---
+      const rhythmMul = RHYTHM_MULTIPLIERS[clamp(gHundreds, 0, 2)];
+      const articMul = articulationMul(rOnes);
+      let baseDuration = audioOpts.neutralDuration;
+      if (c.b > c.r && c.b > c.g) baseDuration = audioOpts.blueDuration;
+      else if (c.r > c.b && c.r > c.g) baseDuration = audioOpts.brightDuration;
+
+      const durationSeconds = beatsToSeconds(audioOpts.noteDurationBeats, audioOpts.tempo)
+        * (baseDuration / audioOpts.neutralDuration)
+        * rhythmMul
+        * articMul;
+
+      // --- Velocity (richer range using G tens + saturation + A channel) ---
+      const baseVel = 0.06 + (gTens / 9) * 0.18;
+      const satBoost = (saturation / 255) * 0.1;
+      const dynamicBoost = (aTens > 5) ? 0.04 : 0;
+      const velocity = clamp(baseVel + satBoost + dynamicBoost, 0.06, 0.36);
+
+      // --- Push primary note ---
+      notes.push({
+        midi: clamp(midi, 24, 108),
+        freq: midiToFreq(clamp(midi, 24, 108)),
+        durationSeconds: Math.max(0.05, durationSeconds),
+        velocity,
+        isRest: false
+      });
+
+      // --- Chord notes (B hundreds) ---
+      const chordIntervals = CHORD_TYPES[clamp(bHundreds, 0, 2)];
+      for (const interval of chordIntervals) {
+        const chordScaleIdx = clamp(finalScaleIdx + interval, 0, scale.length - 1);
+        const chordMidi = rootMidi + scale[chordScaleIdx] + octaveOffset + audioOpts.pitchShiftSemitones;
+        const clampedChordMidi = clamp(chordMidi, 24, 108);
+
+        // Chord notes slightly quieter than root
+        notes.push({
+          midi: clampedChordMidi,
+          freq: midiToFreq(clampedChordMidi),
+          durationSeconds: Math.max(0.05, durationSeconds * 0.85),
+          velocity: clamp(velocity * 0.7, 0.04, 0.3),
+          isRest: false
+        });
+      }
+
+      // --- Same-color repetition pattern ---
+      // If current pixel is very similar to next, add a rhythmic echo
+      if (i + 1 < columns.length) {
+        const next = columns[i + 1];
+        const diff = Math.abs(c.r - next.r) + Math.abs(c.g - next.g) + Math.abs(c.b - next.b);
+        if (diff < 30) {
+          // Similar colors: add a quiet echo note (rhythmic motif)
+          notes.push({
+            midi: clamp(midi, 24, 108),
+            freq: midiToFreq(clamp(midi, 24, 108)),
+            durationSeconds: Math.max(0.05, durationSeconds * 0.4),
+            velocity: clamp(velocity * 0.35, 0.03, 0.15),
+            isRest: false
+          });
+        }
+      }
+    }
+
+    return notes;
+  }
+
+  function brightnessLinear(columns, audioOpts, meta) {
+    const { scale, rootMidi } = meta;
+    const notes = [];
+
+    for (let i = 0; i < columns.length; i++) {
+      const c = columns[i];
+      const brightness = (c.r + c.g + c.b) / 3;
+
+      if (brightness < audioOpts.restThreshold) {
+        notes.push({ midi: 60, freq: 261.63, durationSeconds: beatsToSeconds(0.15, audioOpts.tempo), velocity: 0.04, isRest: true });
+        continue;
+      }
+
+      // Brightness maps linearly to scale position
+      const scaleIdx = Math.floor((brightness / 255) * (scale.length - 1));
+      const midi = clamp(rootMidi + scale[scaleIdx] + audioOpts.pitchShiftSemitones, 24, 108);
+
+      // Color dominance determines duration
+      let dur = audioOpts.neutralDuration;
+      if (c.r > c.g && c.r > c.b) dur = audioOpts.brightDuration;
+      else if (c.b > c.r && c.b > c.g) dur = audioOpts.blueDuration;
+      const durationSeconds = beatsToSeconds(audioOpts.noteDurationBeats, audioOpts.tempo) * (dur / audioOpts.neutralDuration);
+
+      // Alpha channel affects velocity
+      const velocity = clamp(0.08 + (brightness / 255) * 0.25, 0.06, 0.36);
+
+      notes.push({ midi, freq: midiToFreq(midi), durationSeconds: Math.max(0.05, durationSeconds), velocity, isRest: false });
+    }
+
+    return notes;
+  }
+
+  function rgbToHsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h = 0, s = 0, l = (max + min) / 2;
+    if (max !== min) {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+      else if (max === g) h = ((b - r) / d + 2) / 6;
+      else h = ((r - g) / d + 4) / 6;
+    }
+    return { h, s, l };
+  }
+
+  function colorHarmony(columns, audioOpts, meta) {
+    const { scale, rootMidi } = meta;
+    const notes = [];
+
+    for (let i = 0; i < columns.length; i++) {
+      const c = columns[i];
+      const { h, s, l } = rgbToHsl(c.r, c.g, c.b);
+
+      if (l < audioOpts.restThreshold / 255) {
+        notes.push({ midi: 60, freq: 261.63, durationSeconds: beatsToSeconds(0.15, audioOpts.tempo), velocity: 0.04, isRest: true });
+        continue;
+      }
+
+      // Hue (0-1) maps to scale degree (walking through the color wheel = walking through the scale)
+      const scaleIdx = Math.floor(h * scale.length) % scale.length;
+      // Lightness adds octave variation
+      const octaveOffset = l < 0.33 ? -12 : l > 0.66 ? 12 : 0;
+      const midi = clamp(rootMidi + scale[scaleIdx] + octaveOffset + audioOpts.pitchShiftSemitones, 24, 108);
+
+      // Saturation drives velocity (more colorful = louder)
+      const velocity = clamp(0.06 + s * 0.3, 0.06, 0.36);
+
+      // Lightness affects duration (darker = longer, like sustained low notes)
+      const durMul = 0.5 + (1 - l) * 1.0;
+      const durationSeconds = beatsToSeconds(audioOpts.noteDurationBeats, audioOpts.tempo) * durMul;
+
+      notes.push({ midi, freq: midiToFreq(midi), durationSeconds: Math.max(0.05, durationSeconds), velocity, isRest: false });
+
+      // Highly saturated colors add a harmony note (a 3rd above)
+      if (s > 0.6 && scale.length > 2) {
+        const harmIdx = clamp(scaleIdx + 2, 0, scale.length - 1);
+        const harmMidi = clamp(rootMidi + scale[harmIdx] + octaveOffset + audioOpts.pitchShiftSemitones, 24, 108);
+        notes.push({ midi: harmMidi, freq: midiToFreq(harmMidi), durationSeconds: Math.max(0.05, durationSeconds * 0.7), velocity: clamp(velocity * 0.6, 0.04, 0.3), isRest: false });
+      }
+    }
+
+    return notes;
+  }
+
+  function spectral(columns, audioOpts, meta) {
+    // For spectral mode, we need the full column data with per-row info
+    // Since columns only have averaged RGBA, we use RGB channels as 3 frequency bands
+    const { scale, rootMidi } = meta;
+    const notes = [];
+
+    for (let i = 0; i < columns.length; i++) {
+      const c = columns[i];
+      const brightness = (c.r + c.g + c.b) / 3;
+
+      if (brightness < audioOpts.restThreshold) {
+        notes.push({ midi: 60, freq: 261.63, durationSeconds: beatsToSeconds(0.15, audioOpts.tempo), velocity: 0.04, isRest: true });
+        continue;
+      }
+
+      // R = high frequency band, G = mid, B = low
+      const bands = [
+        { energy: c.r / 255, octave: 12 },   // high
+        { energy: c.g / 255, octave: 0 },    // mid
+        { energy: c.b / 255, octave: -12 }   // low
+      ];
+
+      const durationSeconds = beatsToSeconds(audioOpts.noteDurationBeats, audioOpts.tempo);
+
+      // Emit notes for each frequency band that has enough energy
+      for (const band of bands) {
+        if (band.energy > 0.15) {
+          const scaleIdx = Math.floor(band.energy * (scale.length - 1));
+          const midi = clamp(rootMidi + scale[scaleIdx] + band.octave + audioOpts.pitchShiftSemitones, 24, 108);
+          const velocity = clamp(band.energy * 0.3, 0.06, 0.36);
+
+          notes.push({
+            midi,
+            freq: midiToFreq(midi),
+            durationSeconds: Math.max(0.05, durationSeconds * (0.5 + band.energy * 0.8)),
+            velocity,
+            isRest: false
+          });
+        }
+      }
+    }
+
+    return notes;
+  }
+
+  function contour(columns, audioOpts, meta) {
+    const { scale, rootMidi } = meta;
+    const notes = [];
+    let currentScaleIdx = Math.floor(scale.length / 2); // start in middle
+
+    for (let i = 0; i < columns.length; i++) {
+      const c = columns[i];
+      const brightness = (c.r + c.g + c.b) / 3;
+
+      if (brightness < audioOpts.restThreshold) {
+        notes.push({ midi: 60, freq: 261.63, durationSeconds: beatsToSeconds(0.15, audioOpts.tempo), velocity: 0.04, isRest: true });
+        continue;
+      }
+
+      // Calculate gradient (change from previous pixel)
+      if (i > 0) {
+        const prev = columns[i - 1];
+        const prevBrightness = (prev.r + prev.g + prev.b) / 3;
+        const gradient = brightness - prevBrightness; // -255 to +255
+
+        // Gradient determines melodic direction and step size
+        if (Math.abs(gradient) > 10) {
+          const steps = Math.round(gradient / 40); // roughly -6 to +6
+          currentScaleIdx = clamp(currentScaleIdx + steps, 0, scale.length - 1);
+        }
+      }
+
+      // Saturation affects octave
+      const saturation = Math.max(c.r, c.g, c.b) - Math.min(c.r, c.g, c.b);
+      const octaveOffset = saturation > 170 ? 12 : saturation < 60 ? -12 : 0;
+
+      const midi = clamp(rootMidi + scale[currentScaleIdx] + octaveOffset + audioOpts.pitchShiftSemitones, 24, 108);
+      const velocity = clamp(0.08 + (brightness / 255) * 0.2 + (saturation / 255) * 0.08, 0.06, 0.36);
+
+      // Duration varies with gradient magnitude (big changes = short notes, smooth = legato)
+      const gradMag = i > 0 ? Math.abs(brightness - ((columns[i-1].r + columns[i-1].g + columns[i-1].b) / 3)) : 0;
+      const durMul = gradMag > 50 ? 0.5 : gradMag > 20 ? 0.8 : 1.3;
+      const durationSeconds = beatsToSeconds(audioOpts.noteDurationBeats, audioOpts.tempo) * durMul;
+
+      notes.push({ midi, freq: midiToFreq(midi), durationSeconds: Math.max(0.05, durationSeconds), velocity, isRest: false });
+    }
+
+    return notes;
+  }
+
+  const ALGORITHMS = {
+    "rgba-digit": { name: "RGBA Digit", fn: rgbaDigit, description: "RGB channel digits → pitch, rhythm, chords" },
+    "brightness-linear": { name: "Brightness Linear", fn: brightnessLinear, description: "Brightness → pitch, color → duration" },
+    "color-harmony": { name: "Color Harmony", fn: colorHarmony, description: "HSL hue → scale degree, saturation → velocity" },
+    "spectral": { name: "Spectral", fn: spectral, description: "Y-axis as frequency spectrum" },
+    "contour": { name: "Contour", fn: contour, description: "Follow brightness gradients for melody" }
+  };
+
+  function getAlgorithm(name) {
+    return ALGORITHMS[name] || ALGORITHMS["rgba-digit"];
+  }
+
+  function registerAlgorithm(name, fn, displayName, description) {
+    ALGORITHMS[name] = { name: displayName || name, fn, description: description || "" };
+  }
+
   class ImageEngine {
     canHandle(source, meta) {
       return true;
@@ -315,154 +661,10 @@ var FloatImgPlay = (function (exports) {
         columns.push({ r: rr, g: gg, b: bb, a: aa });
       }
 
-      // --- Digit extraction helper ---
-      // value 0-255 → hundreds (0-2), tens (0-25→0-9 scaled), ones (0-9)
-      const digit = (val, place) => {
-        if (place === 100) return Math.floor(val / 100);          // 0, 1, or 2
-        if (place === 10) return Math.floor((val % 100) / 10);    // 0-9 (actually 0-25 but capped)
-        return val % 10;                                           // 0-9
-      };
-
-      // --- Rhythm pattern table (G hundreds) ---
-      const RHYTHM_MULTIPLIERS = [1.5, 1.0, 0.5];
-
-      // --- Chord intervals within key (B hundreds) ---
-      // 0 = single note, 1 = add 3rd, 2 = add 3rd+5th
-      const CHORD_TYPES = [
-        [],                              // 0: single note
-        [2],                             // 1: add a 3rd (2 scale steps up)
-        [2, 4]                           // 2: add 3rd + 5th (triad)
-      ];
-
-      // --- Articulation table (R ones) ---
-      // 0-3: staccato (short), 4-6: normal, 7-9: legato (long)
-      const articulationMul = (d) => {
-        if (d <= 3) return 0.5;
-        if (d <= 6) return 1.0;
-        return 1.4;
-      };
-
-      const notes = [];
-      let prevMidi = -1;
-
-      for (let i = 0; i < columns.length; i++) {
-        const c = columns[i];
-        const brightness = (c.r + c.g + c.b) / 3;
-        const saturation = Math.max(c.r, c.g, c.b) - Math.min(c.r, c.g, c.b);
-        const isRest = brightness < audioOpts.restThreshold;
-
-        if (isRest) {
-          // Dark pixels: ghost note (very quiet, short) instead of silence for variety
-          const ghostMidi = rootMidi + scale[0] + audioOpts.pitchShiftSemitones;
-          notes.push({
-            midi: ghostMidi,
-            freq: midiToFreq(ghostMidi),
-            durationSeconds: beatsToSeconds(0.15, audioOpts.tempo),
-            velocity: 0.04,
-            isRest: true
-          });
-          continue;
-        }
-
-        // === R channel: pitch + articulation ===
-        const rHundreds = digit(c.r, 100);   // octave: 0=low(-12), 1=mid(0), 2=high(+12)
-        const rTens = digit(c.r, 10);        // scale degree selector (0-9 → wraps through scale)
-        const rOnes = digit(c.r, 1);         // articulation (staccato/normal/legato)
-
-        // === G channel: rhythm + velocity ===
-        const gHundreds = digit(c.g, 100);   // rhythm pattern (whole/half/quarter)
-        const gTens = digit(c.g, 10);        // velocity level (0-9 → pp to ff)
-        digit(c.g, 1);         // filter cutoff variation
-
-        // === B channel: harmony + interval ===
-        const bHundreds = digit(c.b, 100);   // chord type (single/3rd/triad)
-        const bTens = digit(c.b, 10);        // melodic interval jump size
-        digit(c.b, 1);         // timing micro-offset (swing feel)
-
-        // === A channel: dynamics ===
-        const aTens = digit(c.a, 10);        // crescendo/decrescendo tendency
-
-        // --- Primary note pitch ---
-        const scaleIdx = rTens % scale.length;
-        const octaveOffset = (rHundreds - 1) * 12;  // -12, 0, or +12
-
-        // Melodic interval: if bTens is high, allow bigger jumps between notes
-        let intervalBoost = 0;
-        if (prevMidi >= 0 && bTens > 5) {
-          // Jump up or down by extra scale steps based on color difference from previous
-          const prevCol = columns[i - 1] || c;
-          const colorDiff = Math.abs(c.r - prevCol.r) + Math.abs(c.g - prevCol.g) + Math.abs(c.b - prevCol.b);
-          if (colorDiff > 100) {
-            intervalBoost = (bTens > 7) ? 2 : 1;
-            if (c.b > prevCol.b) intervalBoost = -intervalBoost; // direction from blue tendency
-          }
-        }
-
-        const finalScaleIdx = clamp(scaleIdx + intervalBoost, 0, scale.length - 1);
-        const midi = rootMidi + scale[finalScaleIdx] + octaveOffset + audioOpts.pitchShiftSemitones;
-        prevMidi = midi;
-
-        // --- Duration ---
-        const rhythmMul = RHYTHM_MULTIPLIERS[clamp(gHundreds, 0, 2)];
-        const articMul = articulationMul(rOnes);
-        let baseDuration = audioOpts.neutralDuration;
-        if (c.b > c.r && c.b > c.g) baseDuration = audioOpts.blueDuration;
-        else if (c.r > c.b && c.r > c.g) baseDuration = audioOpts.brightDuration;
-
-        const durationSeconds = beatsToSeconds(audioOpts.noteDurationBeats, audioOpts.tempo)
-          * (baseDuration / audioOpts.neutralDuration)
-          * rhythmMul
-          * articMul;
-
-        // --- Velocity (richer range using G tens + saturation + A channel) ---
-        const baseVel = 0.06 + (gTens / 9) * 0.18;
-        const satBoost = (saturation / 255) * 0.1;
-        const dynamicBoost = (aTens > 5) ? 0.04 : 0;
-        const velocity = clamp(baseVel + satBoost + dynamicBoost, 0.06, 0.36);
-
-        // --- Push primary note ---
-        notes.push({
-          midi: clamp(midi, 24, 108),
-          freq: midiToFreq(clamp(midi, 24, 108)),
-          durationSeconds: Math.max(0.05, durationSeconds),
-          velocity,
-          isRest: false
-        });
-
-        // --- Chord notes (B hundreds) ---
-        const chordIntervals = CHORD_TYPES[clamp(bHundreds, 0, 2)];
-        for (const interval of chordIntervals) {
-          const chordScaleIdx = clamp(finalScaleIdx + interval, 0, scale.length - 1);
-          const chordMidi = rootMidi + scale[chordScaleIdx] + octaveOffset + audioOpts.pitchShiftSemitones;
-          const clampedChordMidi = clamp(chordMidi, 24, 108);
-
-          // Chord notes slightly quieter than root
-          notes.push({
-            midi: clampedChordMidi,
-            freq: midiToFreq(clampedChordMidi),
-            durationSeconds: Math.max(0.05, durationSeconds * 0.85),
-            velocity: clamp(velocity * 0.7, 0.04, 0.3),
-            isRest: false
-          });
-        }
-
-        // --- Same-color repetition pattern ---
-        // If current pixel is very similar to next, add a rhythmic echo
-        if (i + 1 < columns.length) {
-          const next = columns[i + 1];
-          const diff = Math.abs(c.r - next.r) + Math.abs(c.g - next.g) + Math.abs(c.b - next.b);
-          if (diff < 30) {
-            // Similar colors: add a quiet echo note (rhythmic motif)
-            notes.push({
-              midi: clamp(midi, 24, 108),
-              freq: midiToFreq(clamp(midi, 24, 108)),
-              durationSeconds: Math.max(0.05, durationSeconds * 0.4),
-              velocity: clamp(velocity * 0.35, 0.03, 0.15),
-              isRest: false
-            });
-          }
-        }
-      }
+      // --- Delegate to selected algorithm ---
+      const algorithmName = audioOpts.algorithm || "rgba-digit";
+      const algo = getAlgorithm(algorithmName);
+      const notes = algo.fn(columns, audioOpts, { scale, rootMidi });
 
       return {
         meta: { fileName, avg, scale, rootMidi },
@@ -2132,6 +2334,75 @@ var FloatImgPlay = (function (exports) {
       return this;
     }
 
+    exportConfig() {
+      const config = {
+        version: "2.0.0",
+        type: "float-imgplay-config",
+        audio: { ...this.options.audio },
+        instrument: null,
+        ensemble: null,
+        algorithm: this.options.audio.algorithm || "rgba-digit"
+      };
+
+      // Remove internal _instruments from export
+      delete config.audio._instruments;
+
+      if (this.options.ensemble) {
+        config.ensemble = this.options.ensemble;
+      } else if (this.options.instruments && this.options.instruments.length > 0) {
+        config.instrument = this.options.instruments;
+      }
+
+      return config;
+    }
+
+    importConfig(config) {
+      if (!config || config.type !== "float-imgplay-config") {
+        console.warn("[FloatImgPlay] Invalid config format");
+        return this;
+      }
+
+      // Apply audio settings
+      if (config.audio) {
+        Object.keys(config.audio).forEach((key) => {
+          if (key !== "_instruments") {
+            this.options.audio[key] = config.audio[key];
+          }
+        });
+      }
+
+      // Apply algorithm
+      if (config.algorithm) {
+        this.options.audio.algorithm = config.algorithm;
+      }
+
+      // Apply instrument/ensemble
+      if (config.ensemble) {
+        this.options.ensemble = config.ensemble;
+        this.options.instruments = null;
+      } else if (config.instrument) {
+        this.options.instruments = config.instrument;
+        this.options.ensemble = null;
+      }
+
+      // Re-resolve instruments
+      this._resolveInstruments();
+
+      // Re-analyze all instances
+      this.instances.forEach((inst) => {
+        inst.opts.audio = { ...this.options.audio };
+        if (this.options.audio._instruments) {
+          inst.opts.audio._instruments = this.options.audio._instruments;
+        }
+        this._stopInstance(inst);
+        inst.currentScore = null;
+        inst.currentMeta = null;
+        this._prepareAnalysis(inst);
+      });
+
+      return this;
+    }
+
     refresh() {
       this.instances.forEach((inst) => {
         inst.source = this._resolveSource(inst.el) || inst.source;
@@ -2199,6 +2470,7 @@ var FloatImgPlay = (function (exports) {
           settingsPopup: "float-imgplay-settings-popup"
         },
         audio: {
+          algorithm: "rgba-digit",
           masterVolume: 0.25,
           pitchShiftSemitones: 0,
           waveform: "triangle",
@@ -3215,8 +3487,41 @@ var FloatImgPlay = (function (exports) {
       }
       return null;
     }
+
+    // --- Static: Config Export/Import ---
+
+    static downloadConfig(config, filename = "imgplay-preset.json") {
+      const json = JSON.stringify(config, null, 2);
+      const blob = new Blob([json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    static loadConfigFromFile(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const config = JSON.parse(e.target.result);
+            resolve(config);
+          } catch (err) {
+            reject(new Error("[FloatImgPlay] Invalid JSON: " + err.message));
+          }
+        };
+        reader.onerror = reject;
+        reader.readAsText(file);
+      });
+    }
   }
 
+  exports.ALGORITHMS = ALGORITHMS;
   exports.AudioEngine = AudioEngine;
   exports.ENSEMBLE_PRESETS = ENSEMBLE_PRESETS;
   exports.FloatImgPlay = FloatImgPlay;
@@ -3227,6 +3532,8 @@ var FloatImgPlay = (function (exports) {
   exports.MidiEngine = MidiEngine;
   exports.MidiExport = MidiExport;
   exports.default = FloatImgPlay;
+  exports.getAlgorithm = getAlgorithm;
+  exports.registerAlgorithm = registerAlgorithm;
   exports.resolveEnsemble = resolveEnsemble;
   exports.resolveInstrument = resolveInstrument;
 

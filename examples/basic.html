@@ -289,6 +289,32 @@
       </div>
     </div>
 
+    <!-- ============ ALGORITHMS ============ -->
+    <div class="section">
+      <h2>Sound Algorithms <span>Choose how pixel data maps to music</span></h2>
+      <div class="presets-grid" id="algorithm-grid">
+        <div class="preset-card active" data-algorithm="rgba-digit"><div class="preset-icon">&#127912;</div><div class="preset-name">RGBA Digit</div><div class="preset-desc">Channel digits map to pitch, rhythm, chords</div></div>
+        <div class="preset-card" data-algorithm="brightness-linear"><div class="preset-icon">&#9728;</div><div class="preset-name">Brightness</div><div class="preset-desc">Brightness to pitch, color to duration</div></div>
+        <div class="preset-card" data-algorithm="color-harmony"><div class="preset-icon">&#127752;</div><div class="preset-name">Color Harmony</div><div class="preset-desc">HSL hue to scale degree, saturation to velocity</div></div>
+        <div class="preset-card" data-algorithm="spectral"><div class="preset-icon">&#127926;</div><div class="preset-name">Spectral</div><div class="preset-desc">RGB as frequency bands (high/mid/low)</div></div>
+        <div class="preset-card" data-algorithm="contour"><div class="preset-icon">&#12336;</div><div class="preset-name">Contour</div><div class="preset-desc">Follow brightness gradients for melody</div></div>
+      </div>
+    </div>
+
+    <!-- ============ PRESET JSON ============ -->
+    <div class="section">
+      <h2>Preset JSON <span>Export/import your sound settings</span></h2>
+      <div style="background:#16162a; border:1px solid #2a2a3e; border-radius:12px; padding:24px;">
+        <div class="btn-row" style="margin-bottom:16px;">
+          <button class="btn btn-primary" id="btn-export-json">Export Current Settings</button>
+          <button class="btn btn-secondary" id="btn-import-json">Import JSON File</button>
+          <input type="file" id="import-json-input" accept=".json,application/json" style="display:none;">
+        </div>
+        <div id="json-preview" style="background:#12121f; border:1px solid #2a2a3e; border-radius:8px; padding:16px; font-family:'SF Mono','Fira Code',monospace; font-size:11px; line-height:1.6; color:#a8b2d1; white-space:pre-wrap; max-height:300px; overflow-y:auto; display:none;"></div>
+        <div id="json-status" style="margin-top:10px; font-size:12px; color:#6c5ce7;"></div>
+      </div>
+    </div>
+
     <!-- ============ UPLOAD IMAGE ============ -->
     <div class="section">
       <h2>Upload Image <span>Drop or select your own image to play</span></h2>
@@ -911,7 +937,8 @@ securePlayer.<span class="fn">init</span>();
           octaveShiftSemitones: parseInt(document.getElementById('opt-octaveShiftSemitones').value, 10),
           brightDuration: parseFloat(document.getElementById('opt-brightDuration').value),
           blueDuration: parseFloat(document.getElementById('opt-blueDuration').value),
-          neutralDuration: parseFloat(document.getElementById('opt-neutralDuration').value)
+          neutralDuration: parseFloat(document.getElementById('opt-neutralDuration').value),
+          algorithm: currentAlgorithm
         }
       };
     }
@@ -975,6 +1002,7 @@ securePlayer.<span class="fn">init</span>();
       if (audio.brightDuration !== 0.26) lines.push('    brightDuration: ' + audio.brightDuration + ',');
       if (audio.blueDuration !== 0.46) lines.push('    blueDuration: ' + audio.blueDuration + ',');
       if (audio.neutralDuration !== 0.34) lines.push('    neutralDuration: ' + audio.neutralDuration + ',');
+      if (audio.algorithm && audio.algorithm !== 'rgba-digit') lines.push("    algorithm: '" + audio.algorithm + "',");
       lines.push('  }');
       lines.push('});');
       lines.push('player.init();');
@@ -1079,6 +1107,10 @@ securePlayer.<span class="fn">init</span>();
       document.getElementById('opt-allowedDomains').value = '';
       document.getElementById('opt-maxFileSize').value = '10485760';
       document.getElementById('val-maxFileSize').textContent = '10 MB';
+      currentAlgorithm = 'rgba-digit';
+      document.querySelectorAll('#algorithm-grid .preset-card').forEach(function(card) {
+        card.classList.toggle('active', card.dataset.algorithm === 'rgba-digit');
+      });
       updateAllValueDisplays();
       initPlayer();
     }
@@ -1276,6 +1308,23 @@ securePlayer.<span class="fn">init</span>();
     document.querySelectorAll('#ensemble-grid .preset-card').forEach(function(card) {
       card.addEventListener('click', function() {
         applyEnsemble(card.dataset.ensemble);
+      });
+    });
+
+    // --- Algorithm Presets ---
+    var currentAlgorithm = 'rgba-digit';
+
+    function applyAlgorithm(name) {
+      currentAlgorithm = name;
+      document.querySelectorAll('#algorithm-grid .preset-card').forEach(function(card) {
+        card.classList.toggle('active', card.dataset.algorithm === name);
+      });
+      initPlayer();
+    }
+
+    document.querySelectorAll('#algorithm-grid .preset-card').forEach(function(card) {
+      card.addEventListener('click', function() {
+        applyAlgorithm(card.dataset.algorithm);
       });
     });
 
@@ -1499,6 +1548,47 @@ securePlayer.<span class="fn">init</span>();
         btnEmbedPreview.textContent = 'Preview Sound';
       }
       updateEmbedBtn();
+    });
+
+    // --- JSON Export/Import ---
+    document.getElementById('btn-export-json').addEventListener('click', function() {
+      if (!player) return;
+      var config = player.exportConfig();
+      var preview = document.getElementById('json-preview');
+      preview.textContent = JSON.stringify(config, null, 2);
+      preview.style.display = 'block';
+      FloatImgPlay.FloatImgPlay.downloadConfig(config, 'imgplay-preset.json');
+      document.getElementById('json-status').textContent = 'Preset exported and downloaded.';
+    });
+
+    document.getElementById('btn-import-json').addEventListener('click', function() {
+      document.getElementById('import-json-input').click();
+    });
+
+    document.getElementById('import-json-input').addEventListener('change', function() {
+      var file = this.files[0];
+      if (!file) return;
+      FloatImgPlay.FloatImgPlay.loadConfigFromFile(file).then(function(config) {
+        if (player) {
+          player.importConfig(config);
+          var preview = document.getElementById('json-preview');
+          preview.textContent = JSON.stringify(config, null, 2);
+          preview.style.display = 'block';
+          document.getElementById('json-status').textContent = 'Preset imported: ' + (config.algorithm || 'rgba-digit') + (config.ensemble ? ' + ' + config.ensemble : config.instrument ? ' + custom instruments' : '');
+          // Update algorithm UI
+          if (config.algorithm) {
+            currentAlgorithm = config.algorithm;
+            document.querySelectorAll('#algorithm-grid .preset-card').forEach(function(card) {
+              card.classList.toggle('active', card.dataset.algorithm === config.algorithm);
+            });
+          }
+          updateAllValueDisplays();
+          updateGeneratedCode();
+        }
+      }).catch(function(err) {
+        document.getElementById('json-status').textContent = 'Error: ' + err.message;
+      });
+      this.value = '';
     });
 
     // --- Init ---

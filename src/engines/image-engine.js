@@ -163,10 +163,15 @@ export class ImageEngine {
   }
 
   _analyzeImage(img, fileName, audioOpts) {
-    const maxSize = 64;
-    let w = img.width;
-    let h = img.height;
+    const origW = img.width;
+    const origH = img.height;
 
+    // Scale canvas resolution with image size (bigger image = more detail)
+    const maxDim = Math.max(origW, origH);
+    const maxSize = clamp(Math.round(maxDim / 3), 32, 256);
+
+    let w = origW;
+    let h = origH;
     if (w > h) {
       h = Math.max(1, Math.round(h * (maxSize / w)));
       w = maxSize;
@@ -190,11 +195,15 @@ export class ImageEngine {
       ? audioOpts.fixedRootMidi
       : charToKey((fileName?.[0] || "c").toLowerCase());
 
+    // Scale sample columns with image width (bigger image = more notes = longer sound)
+    const dynamicColumns = clamp(Math.round(origW / 6), 12, 128);
+    const columns_count = audioOpts.sampleColumns || dynamicColumns;
+
     const rows = (audioOpts.sampleRows || [0.25, 0.5, 0.75])
       .map(v => Math.max(0, Math.min(h - 1, Math.floor(h * v))));
-    const step = Math.max(1, Math.floor(w / Math.max(1, audioOpts.sampleColumns)));
+    const step = Math.max(1, Math.floor(w / Math.max(1, columns_count)));
 
-    // --- Enhanced analysis: collect raw pixel data per column ---
+    // --- Collect raw pixel data per column ---
     const columns = [];
     for (let x = 0; x < w; x += step) {
       let rr = 0, gg = 0, bb = 0, aa = 0;
@@ -221,7 +230,7 @@ export class ImageEngine {
     const notes = algo.fn(columns, audioOpts, { scale, rootMidi });
 
     return {
-      meta: { fileName, avg, scale, rootMidi },
+      meta: { fileName, avg, scale, rootMidi, origWidth: origW, origHeight: origH },
       score: notes
     };
   }

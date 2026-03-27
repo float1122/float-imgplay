@@ -527,8 +527,8 @@
         <div class="settings-grid">
           <div class="setting-row">
             <label>sampleColumns</label>
-            <input type="range" id="opt-sampleColumns" min="4" max="64" step="1" value="24">
-            <span class="val" id="val-sampleColumns">24</span>
+            <input type="range" id="opt-sampleColumns" min="0" max="128" step="1" value="0">
+            <span class="val" id="val-sampleColumns">auto</span>
           </div>
         </div>
       </div>
@@ -1078,7 +1078,7 @@ securePlayer.<span class="fn">init</span>();
       if (audio.tempo !== 100) lines.push('    tempo: ' + audio.tempo + ',');
       if (audio.noteDurationBeats !== 0.5) lines.push('    noteDurationBeats: ' + audio.noteDurationBeats + ',');
       if (audio.restThreshold !== 28) lines.push('    restThreshold: ' + audio.restThreshold + ',');
-      if (audio.sampleColumns !== 24) lines.push('    sampleColumns: ' + audio.sampleColumns + ',');
+      if (audio.sampleColumns !== 0) lines.push('    sampleColumns: ' + audio.sampleColumns + ',');
       if (audio.filterType !== 'lowpass') lines.push("    filterType: '" + audio.filterType + "',");
       if (audio.filterBaseHz !== 900) lines.push('    filterBaseHz: ' + audio.filterBaseHz + ',');
       if (audio.filterVelocityAmount !== 3000) lines.push('    filterVelocityAmount: ' + audio.filterVelocityAmount + ',');
@@ -1182,7 +1182,7 @@ securePlayer.<span class="fn">init</span>();
       document.getElementById('opt-tempo').value = '100';
       document.getElementById('opt-noteDurationBeats').value = '0.5';
       document.getElementById('opt-restThreshold').value = '28';
-      document.getElementById('opt-sampleColumns').value = '24';
+      document.getElementById('opt-sampleColumns').value = '0';
       document.getElementById('opt-filterType').value = 'lowpass';
       document.getElementById('opt-filterBaseHz').value = '900';
       document.getElementById('opt-filterVelocityAmount').value = '3000';
@@ -1216,16 +1216,18 @@ securePlayer.<span class="fn">init</span>();
       'brightDuration', 'blueDuration', 'neutralDuration'
     ];
 
+    function formatRangeValue(id, val) {
+      if (id === 'fixedRootMidi') return val + ' (' + midiNoteName(parseInt(val, 10)) + ')';
+      if (id === 'sampleColumns' && val === '0') return 'auto';
+      return val;
+    }
+
     function updateAllValueDisplays() {
       rangeIds.forEach(function(id) {
         var input = document.getElementById('opt-' + id);
         var display = document.getElementById('val-' + id);
         if (input && display) {
-          var v = input.value;
-          if (id === 'fixedRootMidi') {
-            v = v + ' (' + midiNoteName(parseInt(v, 10)) + ')';
-          }
-          display.textContent = v;
+          display.textContent = formatRangeValue(id, input.value);
         }
       });
     }
@@ -1236,11 +1238,7 @@ securePlayer.<span class="fn">init</span>();
         input.addEventListener('input', function() {
           var display = document.getElementById('val-' + id);
           if (display) {
-            var v = input.value;
-            if (id === 'fixedRootMidi') {
-              v = v + ' (' + midiNoteName(parseInt(v, 10)) + ')';
-            }
-            display.textContent = v;
+            display.textContent = formatRangeValue(id, input.value);
           }
           updateGeneratedCode();
         });

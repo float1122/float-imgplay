@@ -739,10 +739,15 @@ var FloatImgPlay = (function (exports) {
     }
 
     _analyzeImage(img, fileName, audioOpts) {
-      const maxSize = 64;
-      let w = img.width;
-      let h = img.height;
+      const origW = img.width;
+      const origH = img.height;
 
+      // Scale canvas resolution with image size (bigger image = more detail)
+      const maxDim = Math.max(origW, origH);
+      const maxSize = clamp(Math.round(maxDim / 3), 32, 256);
+
+      let w = origW;
+      let h = origH;
       if (w > h) {
         h = Math.max(1, Math.round(h * (maxSize / w)));
         w = maxSize;
@@ -766,11 +771,15 @@ var FloatImgPlay = (function (exports) {
         ? audioOpts.fixedRootMidi
         : charToKey((fileName?.[0] || "c").toLowerCase());
 
+      // Scale sample columns with image width (bigger image = more notes = longer sound)
+      const dynamicColumns = clamp(Math.round(origW / 6), 12, 128);
+      const columns_count = audioOpts.sampleColumns || dynamicColumns;
+
       const rows = (audioOpts.sampleRows || [0.25, 0.5, 0.75])
         .map(v => Math.max(0, Math.min(h - 1, Math.floor(h * v))));
-      const step = Math.max(1, Math.floor(w / Math.max(1, audioOpts.sampleColumns)));
+      const step = Math.max(1, Math.floor(w / Math.max(1, columns_count)));
 
-      // --- Enhanced analysis: collect raw pixel data per column ---
+      // --- Collect raw pixel data per column ---
       const columns = [];
       for (let x = 0; x < w; x += step) {
         let rr = 0, gg = 0, bb = 0, aa = 0;
@@ -797,7 +806,7 @@ var FloatImgPlay = (function (exports) {
       const notes = algo.fn(columns, audioOpts, { scale, rootMidi });
 
       return {
-        meta: { fileName, avg, scale, rootMidi },
+        meta: { fileName, avg, scale, rootMidi, origWidth: origW, origHeight: origH },
         score: notes
       };
     }
@@ -2607,7 +2616,7 @@ var FloatImgPlay = (function (exports) {
           tempo: 100,
           noteDurationBeats: 0.5,
           restThreshold: 28,
-          sampleColumns: 24,
+          sampleColumns: 0, // 0 = auto (scales with image width)
           sampleRows: [0.25, 0.5, 0.75],
           filterType: "lowpass",
           filterBaseHz: 900,
@@ -3315,7 +3324,7 @@ var FloatImgPlay = (function (exports) {
         { key: "attack", label: "Attack", type: "range", min: 0.001, max: 0.5, step: 0.001 },
         { key: "release", label: "Release", type: "range", min: 0.001, max: 0.5, step: 0.001 },
         { key: "noteDurationBeats", label: "Note Dur", type: "range", min: 0.1, max: 2, step: 0.05 },
-        { key: "sampleColumns", label: "Columns", type: "range", min: 4, max: 64, step: 1 },
+        { key: "sampleColumns", label: "Columns", type: "range", min: 0, max: 128, step: 1 },
         { key: "restThreshold", label: "Rest Thresh", type: "range", min: 0, max: 128, step: 1 },
         { key: "brightDuration", label: "Bright Dur", type: "range", min: 0.05, max: 1, step: 0.01 },
         { key: "blueDuration", label: "Blue Dur", type: "range", min: 0.05, max: 1, step: 0.01 },

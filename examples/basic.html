@@ -355,6 +355,52 @@
       <div id="upload-grid"></div>
     </div>
 
+    <!-- ============ GUIDE ============ -->
+    <div class="section" id="guide-section">
+      <div style="background:#13132a; border:1px solid #2a2a3e; border-radius:10px; overflow:hidden;">
+        <button id="guide-toggle" style="width:100%; display:flex; justify-content:space-between; align-items:center; padding:14px 18px; background:none; border:0; color:#fff; cursor:pointer; font-family:inherit; font-size:14px; font-weight:600; text-align:left;">
+          <span>What you can do on this page</span>
+          <span id="guide-arrow" style="font-size:12px; color:#666; transition:transform 0.2s;">&blacktriangledown;</span>
+        </button>
+        <div id="guide-body" style="padding:0 18px 18px; font-size:12px; line-height:1.8; color:#999;">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px 24px;">
+            <div>
+              <div style="color:#6c5ce7; font-weight:700; font-size:10px; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Play</div>
+              <div>Click any image to play its generated sound. Each image produces different music based on its pixel data.</div>
+            </div>
+            <div>
+              <div style="color:#6c5ce7; font-weight:700; font-size:10px; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Mix</div>
+              <div>Switch instruments, ensembles, and algorithms from the mixer strip above the demo grid. Changes apply to all images instantly.</div>
+            </div>
+            <div>
+              <div style="color:#6c5ce7; font-weight:700; font-size:10px; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Orchestra</div>
+              <div>Hit <strong style="color:#ccc;">Play All</strong> to play every image simultaneously. Choose an ensemble preset to layer multiple instruments.</div>
+            </div>
+            <div>
+              <div style="color:#6c5ce7; font-weight:700; font-size:10px; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Per-Image Settings</div>
+              <div>Click the <strong style="color:#ccc;">gear icon</strong> on images that have it. Each image can have its own instrument, algorithm, and audio settings.</div>
+            </div>
+            <div>
+              <div style="color:#6c5ce7; font-weight:700; font-size:10px; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Upload</div>
+              <div>Drop your own images above to hear what they sound like. Any image works &mdash; photos, art, screenshots.</div>
+            </div>
+            <div>
+              <div style="color:#6c5ce7; font-weight:700; font-size:10px; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Embed MIDI</div>
+              <div>Combine a PNG image with a MIDI file. The resulting image looks normal but plays your MIDI when loaded by Float:ImgPlay.</div>
+            </div>
+            <div>
+              <div style="color:#6c5ce7; font-weight:700; font-size:10px; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Fine-Tune</div>
+              <div>Scroll down to <strong style="color:#ccc;">Settings</strong> to adjust tempo, waveform, scale, filter, envelope, and more. Click Apply to hear the difference.</div>
+            </div>
+            <div>
+              <div style="color:#6c5ce7; font-weight:700; font-size:10px; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Export</div>
+              <div>Export your current settings as JSON or download generated scores as MIDI files. Import presets others have shared.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ============ EMBED MIDI INTO IMAGE ============ -->
     <div class="section">
       <h2>Embed MIDI into Image <span>Combine PNG + MIDI into one playable image file</span></h2>
@@ -1632,6 +1678,19 @@ securePlayer.<span class="fn">init</span>();
         document.getElementById('json-status').textContent = 'Error: ' + err.message;
       });
       this.value = '';
+    });
+
+    // --- Guide toggle ---
+    var guideBody = document.getElementById('guide-body');
+    var guideArrow = document.getElementById('guide-arrow');
+    document.getElementById('guide-toggle').addEventListener('click', function() {
+      if (guideBody.style.display === 'none') {
+        guideBody.style.display = 'block';
+        guideArrow.style.transform = 'rotate(0deg)';
+      } else {
+        guideBody.style.display = 'none';
+        guideArrow.style.transform = 'rotate(-90deg)';
+      }
     });
 
     // --- Init ---

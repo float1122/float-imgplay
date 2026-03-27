@@ -1,10 +1,14 @@
-# Float:ImgPlay
+<p align="center">
+  <img src="logo.png" alt="Float:ImgPlay" width="120">
+</p>
 
-Image-to-sound engine. Converts images into playable audio using Web Audio API.
+<h1 align="center">Float:ImgPlay</h1>
 
-> "Images are not just seen — they are played."
+<p align="center">Image-to-sound engine. Converts images into playable audio using Web Audio API.</p>
 
-**[Live Demo](https://float1122.github.io/float-imgplay/)**
+<p align="center"><em>"Images are not just seen — they are played."</em></p>
+
+<p align="center"><strong><a href="https://float1122.github.io/float-imgplay/">Live Demo</a></strong></p>
 
 ## Features
 

@@ -274,6 +274,39 @@
       <div id="upload-grid"></div>
     </div>
 
+    <!-- ============ EMBED MIDI INTO IMAGE ============ -->
+    <div class="section">
+      <h2>Embed MIDI into Image <span>Combine PNG + MIDI into one playable image file</span></h2>
+      <div class="embed-panel" style="background:#16162a; border:1px solid #2a2a3e; border-radius:12px; padding:24px;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
+          <div>
+            <label style="display:block; font-size:12px; color:#aaa; margin-bottom:8px;">PNG Image</label>
+            <div class="upload-zone" id="embed-png-zone" style="padding:20px;">
+              <div class="upload-icon" style="font-size:24px;">&#128444;</div>
+              <div class="upload-text" style="font-size:13px;" id="embed-png-label">Drop PNG or click</div>
+              <input type="file" id="embed-png-input" accept="image/png" style="display:none;">
+            </div>
+            <div id="embed-png-preview" style="margin-top:10px; text-align:center;"></div>
+          </div>
+          <div>
+            <label style="display:block; font-size:12px; color:#aaa; margin-bottom:8px;">MIDI File</label>
+            <div class="upload-zone" id="embed-midi-zone" style="padding:20px;">
+              <div class="upload-icon" style="font-size:24px;">&#127925;</div>
+              <div class="upload-text" style="font-size:13px;" id="embed-midi-label">Drop .mid or click</div>
+              <input type="file" id="embed-midi-input" accept=".mid,.midi,audio/midi" style="display:none;">
+            </div>
+            <div id="embed-midi-info" style="margin-top:10px; font-size:12px; color:#888;"></div>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btn-embed" disabled>Embed & Download PNG</button>
+          <button class="btn btn-secondary" id="btn-embed-preview">Preview Sound</button>
+          <button class="btn btn-secondary" id="btn-embed-clear">Clear</button>
+        </div>
+        <div id="embed-status" style="margin-top:10px; font-size:12px; color:#6c5ce7;"></div>
+      </div>
+    </div>
+
     <!-- ============ SETTINGS PANEL ============ -->
     <div class="section">
       <h2>Settings <span>Change options and click "Apply" to reinitialize</span></h2>
@@ -1286,6 +1319,151 @@ securePlayer.<span class="fn">init</span>();
         reader.readAsDataURL(file);
       });
     }
+
+    // --- Embed MIDI into Image ---
+    var embedPngFile = null;
+    var embedMidiFile = null;
+    var MetaEmbed = FloatImgPlay.MetaEmbed;
+    var MidiEngineClass = FloatImgPlay.MidiEngine;
+
+    var embedPngZone = document.getElementById('embed-png-zone');
+    var embedPngInput = document.getElementById('embed-png-input');
+    var embedMidiZone = document.getElementById('embed-midi-zone');
+    var embedMidiInput = document.getElementById('embed-midi-input');
+    var btnEmbed = document.getElementById('btn-embed');
+    var btnEmbedPreview = document.getElementById('btn-embed-preview');
+    var embedStatus = document.getElementById('embed-status');
+
+    function updateEmbedBtn() {
+      btnEmbed.disabled = !(embedPngFile && embedMidiFile);
+    }
+
+    // PNG drop/click
+    embedPngZone.addEventListener('click', function() { embedPngInput.click(); });
+    embedPngZone.addEventListener('dragover', function(e) { e.preventDefault(); embedPngZone.classList.add('drag-over'); });
+    embedPngZone.addEventListener('dragleave', function() { embedPngZone.classList.remove('drag-over'); });
+    embedPngZone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      embedPngZone.classList.remove('drag-over');
+      var f = e.dataTransfer.files[0];
+      if (f && f.type === 'image/png') setEmbedPng(f);
+      else embedStatus.textContent = 'PNG files only.';
+    });
+    embedPngInput.addEventListener('change', function() {
+      if (embedPngInput.files[0]) setEmbedPng(embedPngInput.files[0]);
+      embedPngInput.value = '';
+    });
+
+    function setEmbedPng(file) {
+      embedPngFile = file;
+      document.getElementById('embed-png-label').textContent = file.name;
+      var preview = document.getElementById('embed-png-preview');
+      while (preview.firstChild) preview.removeChild(preview.firstChild);
+      var img = document.createElement('img');
+      img.src = URL.createObjectURL(file);
+      img.style.maxWidth = '200px';
+      img.style.maxHeight = '150px';
+      img.style.borderRadius = '8px';
+      preview.appendChild(img);
+      updateEmbedBtn();
+    }
+
+    // MIDI drop/click
+    embedMidiZone.addEventListener('click', function() { embedMidiInput.click(); });
+    embedMidiZone.addEventListener('dragover', function(e) { e.preventDefault(); embedMidiZone.classList.add('drag-over'); });
+    embedMidiZone.addEventListener('dragleave', function() { embedMidiZone.classList.remove('drag-over'); });
+    embedMidiZone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      embedMidiZone.classList.remove('drag-over');
+      var f = e.dataTransfer.files[0];
+      if (f && (f.name.endsWith('.mid') || f.name.endsWith('.midi'))) setEmbedMidi(f);
+      else embedStatus.textContent = 'MIDI files only (.mid).';
+    });
+    embedMidiInput.addEventListener('change', function() {
+      if (embedMidiInput.files[0]) setEmbedMidi(embedMidiInput.files[0]);
+      embedMidiInput.value = '';
+    });
+
+    function setEmbedMidi(file) {
+      embedMidiFile = file;
+      document.getElementById('embed-midi-label').textContent = file.name;
+      // Parse and show info
+      file.arrayBuffer().then(function(buf) {
+        try {
+          var parsed = MidiEngineClass.parseMidi(buf);
+          var info = document.getElementById('embed-midi-info');
+          info.textContent = parsed.notes.length + ' notes, ' +
+            Math.round(parsed.bpm) + ' BPM, ' +
+            parsed.notes.reduce(function(max, n) { return Math.max(max, n.time + n.duration); }, 0).toFixed(1) + 's duration';
+        } catch(e) {
+          document.getElementById('embed-midi-info').textContent = 'MIDI loaded (' + (file.size / 1024).toFixed(1) + ' KB)';
+        }
+      });
+      updateEmbedBtn();
+    }
+
+    // Embed button
+    btnEmbed.addEventListener('click', function() {
+      if (!embedPngFile || !embedMidiFile) return;
+      embedStatus.textContent = 'Embedding...';
+      MetaEmbed.embedMidi(embedPngFile, embedMidiFile).then(function(blob) {
+        var name = embedPngFile.name.replace('.png', '') + '-imgplay.png';
+        MetaEmbed.download(blob, name);
+        embedStatus.textContent = 'Downloaded: ' + name + ' (' + (blob.size / 1024).toFixed(1) + ' KB)';
+      }).catch(function(err) {
+        embedStatus.textContent = 'Error: ' + err.message;
+      });
+    });
+
+    // Preview button — play the MIDI through MidiEngine
+    var previewHandle = null;
+    btnEmbedPreview.addEventListener('click', function() {
+      if (!embedMidiFile) {
+        embedStatus.textContent = 'Load a MIDI file first.';
+        return;
+      }
+      if (previewHandle) {
+        var midiEng = new MidiEngineClass();
+        midiEng.stop(previewHandle);
+        previewHandle = null;
+        btnEmbedPreview.textContent = 'Preview Sound';
+        return;
+      }
+      embedMidiFile.arrayBuffer().then(function(buf) {
+        var parsed = MidiEngineClass.parseMidi(buf);
+        var ctx = player ? player._ensureAudioContext() : new (window.AudioContext || window.webkitAudioContext)();
+        if (ctx.state === 'suspended') ctx.resume();
+        var midiEng = new MidiEngineClass();
+        var opts = getOptionsFromUI();
+        previewHandle = midiEng.play(parsed, ctx, opts.audio);
+        btnEmbedPreview.textContent = 'Stop Preview';
+        setTimeout(function() {
+          previewHandle = null;
+          btnEmbedPreview.textContent = 'Preview Sound';
+        }, previewHandle.totalDuration * 1000 + 100);
+      }).catch(function(err) {
+        embedStatus.textContent = 'Preview error: ' + err.message;
+      });
+    });
+
+    // Clear button
+    document.getElementById('btn-embed-clear').addEventListener('click', function() {
+      embedPngFile = null;
+      embedMidiFile = null;
+      document.getElementById('embed-png-label').textContent = 'Drop PNG or click';
+      document.getElementById('embed-midi-label').textContent = 'Drop .mid or click';
+      var preview = document.getElementById('embed-png-preview');
+      while (preview.firstChild) preview.removeChild(preview.firstChild);
+      document.getElementById('embed-midi-info').textContent = '';
+      embedStatus.textContent = '';
+      if (previewHandle) {
+        var midiEng = new MidiEngineClass();
+        midiEng.stop(previewHandle);
+        previewHandle = null;
+        btnEmbedPreview.textContent = 'Preview Sound';
+      }
+      updateEmbedBtn();
+    });
 
     // --- Init ---
     initPlayer();

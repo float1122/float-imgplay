@@ -10,7 +10,8 @@ import { MidiEngine } from "./engines/midi-engine.js";
 import { AudioEngine } from "./engines/audio-engine.js";
 import { MetaParser } from "./parsers/meta-parser.js";
 import { MidiExport } from "./export/midi-export.js";
-export { ImageEngine, MidiEngine, AudioEngine, MetaParser, MidiExport };
+import { MetaEmbed } from "./embed/meta-embed.js";
+export { ImageEngine, MidiEngine, AudioEngine, MetaParser, MidiExport, MetaEmbed };
 
 export class FloatImgPlay {
   constructor(options = {}) {

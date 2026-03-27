@@ -366,6 +366,22 @@
         </div>
       </div>
 
+      <!-- Security Options -->
+      <div class="settings-panel">
+        <h3>Security</h3>
+        <div class="settings-grid">
+          <div class="setting-row">
+            <label>allowedDomains</label>
+            <input type="text" id="opt-allowedDomains" placeholder="e.g. cdn.example.com, img.example.com" style="flex:1; background:#252542; border:1px solid #3a3a5a; color:#fff; padding:4px 8px; border-radius:4px; font-size:12px;">
+          </div>
+          <div class="setting-row">
+            <label>maxFileSize (bytes)</label>
+            <input type="number" id="opt-maxFileSize" value="10485760" min="0" style="width:120px; background:#252542; border:1px solid #3a3a5a; color:#fff; padding:4px 8px; border-radius:4px; font-size:12px;">
+            <span class="val" id="val-maxFileSize">10 MB</span>
+          </div>
+        </div>
+      </div>
+
       <!-- Apply / Reset -->
       <div class="btn-row">
         <button class="btn btn-primary" id="btn-apply">Apply Settings</button>
@@ -397,6 +413,18 @@
           play/stop targets the first image (Sky). destroy removes all instances. init re-initializes.
         </p>
       </div>
+
+      <div class="api-demo" style="margin-top:16px;">
+        <h3>MIDI Export</h3>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="api-midi-export">Export Sky as MIDI</button>
+          <button class="btn btn-secondary" id="api-midi-export-all">Export All as MIDI</button>
+        </div>
+        <p class="desc" style="margin-top:12px">
+          Export image-generated scores as Standard MIDI Files (.mid). Uses MidiExport module.
+        </p>
+        <div id="midi-export-status" style="margin-top:8px; font-size:12px; color:#6c5ce7;"></div>
+      </div>
     </div>
 
     <!-- ============ CODE EXAMPLES ============ -->
@@ -410,6 +438,7 @@
         <div class="tab" data-tab="tab-bg">Background Image</div>
         <div class="tab" data-tab="tab-perelement">Per-Element</div>
         <div class="tab" data-tab="tab-api">API Usage</div>
+        <div class="tab" data-tab="tab-v2">v2 Features</div>
       </div>
 
       <!-- Script Tag -->
@@ -542,6 +571,47 @@ player.<span class="fn">destroy</span>();
       </div>
     </div>
 
+      <!-- v2 Features -->
+      <div class="tab-content" id="tab-v2">
+        <div class="code-block">
+          <button class="copy-btn" data-target="tab-v2">Copy</button>
+<span class="kw">import</span> { <span class="fn">FloatImgPlay</span>, <span class="fn">MidiExport</span>, <span class="fn">MetaParser</span> } <span class="kw">from</span> <span class="str">'float-imgplay'</span>;
+
+<span class="cm">// --- MIDI Export ---</span>
+<span class="kw">const</span> player = <span class="kw">new</span> <span class="fn">FloatImgPlay</span>({ <span class="prop">selector</span>: <span class="str">'.float-imgplay'</span> });
+player.<span class="fn">init</span>();
+
+<span class="cm">// Get score from an instance and export as MIDI</span>
+<span class="kw">const</span> inst = player.instances.<span class="fn">get</span>(someElement);
+<span class="kw">if</span> (inst &amp;&amp; inst.currentScore) {
+  <span class="fn">MidiExport</span>.<span class="fn">exportAndDownload</span>(
+    inst.currentScore, { <span class="prop">bpm</span>: <span class="num">120</span> }, <span class="str">'my-image.mid'</span>
+  );
+}
+
+<span class="cm">// --- Embedded Metadata (PNG tEXt / EXIF / Sidecar JSON) ---</span>
+<span class="cm">// Images with embedded imgplay metadata auto-switch engines:</span>
+<span class="cm">// - meta.midi present  &rarr; MIDI Engine (parses &amp; plays MIDI)</span>
+<span class="cm">// - meta.audio present &rarr; Audio Engine (streams mp3/wav)</span>
+<span class="cm">// - no meta            &rarr; Image Engine (pixel analysis)</span>
+
+<span class="cm">// Sidecar JSON example: place next to image as image.jpg.imgplay.json</span>
+<span class="cm">// { "imgplay": { "midi": { "url": "/songs/track.mid" } } }</span>
+
+<span class="cm">// --- Security Options ---</span>
+<span class="kw">const</span> securePlayer = <span class="kw">new</span> <span class="fn">FloatImgPlay</span>({
+  <span class="prop">selector</span>: <span class="str">'.float-imgplay'</span>,
+  <span class="prop">security</span>: {
+    <span class="prop">allowedDomains</span>: [<span class="str">'cdn.example.com'</span>, <span class="str">'img.example.com'</span>],
+    <span class="prop">maxFileSize</span>: <span class="num">5242880</span>,  <span class="cm">// 5MB</span>
+    <span class="prop">allowedMimeTypes</span>: [<span class="str">'image/png'</span>, <span class="str">'image/jpeg'</span>]
+  }
+});
+securePlayer.<span class="fn">init</span>();
+        </div>
+      </div>
+    </div>
+
     <!-- ============ ALL OPTIONS REFERENCE ============ -->
     <div class="section">
       <h2>Full Options Reference</h2>
@@ -583,6 +653,18 @@ player.<span class="fn">destroy</span>();
     <span class="prop">brightDuration</span>: <span class="num">0.26</span>,           <span class="cm">// Duration multiplier for red-dominant pixels</span>
     <span class="prop">blueDuration</span>: <span class="num">0.46</span>,             <span class="cm">// Duration multiplier for blue-dominant pixels</span>
     <span class="prop">neutralDuration</span>: <span class="num">0.34</span>           <span class="cm">// Duration multiplier for neutral pixels</span>
+  },
+
+  <span class="cm">// --- Security ---</span>
+  <span class="prop">security</span>: {
+    <span class="prop">allowedDomains</span>: [],              <span class="cm">// Empty = allow all. List of allowed hostnames</span>
+    <span class="prop">maxFileSize</span>: <span class="num">10485760</span>,            <span class="cm">// Max file size in bytes (10MB). 0 = no limit</span>
+    <span class="prop">allowedMimeTypes</span>: [              <span class="cm">// Allowed MIME types for images</span>
+      <span class="str">'image/png'</span>,
+      <span class="str">'image/jpeg'</span>,
+      <span class="str">'image/webp'</span>,
+      <span class="str">'image/gif'</span>
+    ]
   }
 }).<span class="fn">init</span>();
       </div>
@@ -596,6 +678,8 @@ player.<span class="fn">destroy</span>();
     let player = null;
 
     function getOptionsFromUI() {
+      var domainsStr = document.getElementById('opt-allowedDomains').value.trim();
+      var allowedDomains = domainsStr ? domainsStr.split(',').map(function(s) { return s.trim(); }).filter(Boolean) : [];
       return {
         selector: '.float-imgplay',
         autoplay: document.getElementById('opt-autoplay').checked,
@@ -605,6 +689,11 @@ player.<span class="fn">destroy</span>();
         showVolumeControl: document.getElementById('opt-showVolumeControl').checked,
         visibilityThreshold: parseFloat(document.getElementById('opt-visibilityThreshold').value),
         zIndexUI: parseInt(document.getElementById('opt-zIndexUI').value, 10),
+        security: {
+          allowedDomains: allowedDomains,
+          maxFileSize: parseInt(document.getElementById('opt-maxFileSize').value, 10) || 10485760,
+          allowedMimeTypes: ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
+        },
         audio: {
           masterVolume: parseFloat(document.getElementById('opt-masterVolume').value),
           pitchShiftSemitones: parseInt(document.getElementById('opt-pitchShiftSemitones').value, 10),
@@ -639,6 +728,7 @@ player.<span class="fn">destroy</span>();
 
     function generateCode(opts) {
       var audio = opts.audio;
+      var sec = opts.security || {};
       var lines = [];
       lines.push('const player = new FloatImgPlay({');
       lines.push("  selector: '.float-imgplay',");
@@ -649,6 +739,17 @@ player.<span class="fn">destroy</span>();
       if (!opts.showVolumeControl) lines.push('  showVolumeControl: false,');
       if (opts.visibilityThreshold !== 0.25) lines.push('  visibilityThreshold: ' + opts.visibilityThreshold + ',');
       if (opts.zIndexUI !== 12) lines.push('  zIndexUI: ' + opts.zIndexUI + ',');
+
+      if ((sec.allowedDomains && sec.allowedDomains.length > 0) || (sec.maxFileSize && sec.maxFileSize !== 10485760)) {
+        lines.push('  security: {');
+        if (sec.allowedDomains && sec.allowedDomains.length > 0) {
+          lines.push("    allowedDomains: ['" + sec.allowedDomains.join("', '") + "'],");
+        }
+        if (sec.maxFileSize && sec.maxFileSize !== 10485760) {
+          lines.push('    maxFileSize: ' + sec.maxFileSize + ',');
+        }
+        lines.push('  },');
+      }
 
       lines.push('  audio: {');
       if (audio.masterVolume !== 0.25) lines.push('    masterVolume: ' + audio.masterVolume + ',');
@@ -727,6 +828,9 @@ player.<span class="fn">destroy</span>();
       document.getElementById('opt-brightDuration').value = '0.26';
       document.getElementById('opt-blueDuration').value = '0.46';
       document.getElementById('opt-neutralDuration').value = '0.34';
+      document.getElementById('opt-allowedDomains').value = '';
+      document.getElementById('opt-maxFileSize').value = '10485760';
+      document.getElementById('val-maxFileSize').textContent = '10 MB';
       updateAllValueDisplays();
       initPlayer();
     }
@@ -830,6 +934,48 @@ player.<span class="fn">destroy</span>();
           setTimeout(function() { btn.textContent = 'Copy'; }, 1500);
         });
       });
+    });
+
+    // --- Security field listeners ---
+    document.getElementById('opt-allowedDomains').addEventListener('input', updateGeneratedCode);
+    document.getElementById('opt-maxFileSize').addEventListener('input', function() {
+      var bytes = parseInt(this.value, 10) || 0;
+      var display = document.getElementById('val-maxFileSize');
+      if (bytes >= 1048576) display.textContent = (bytes / 1048576).toFixed(1) + ' MB';
+      else if (bytes >= 1024) display.textContent = (bytes / 1024).toFixed(0) + ' KB';
+      else display.textContent = bytes + ' B';
+      updateGeneratedCode();
+    });
+
+    // --- MIDI Export buttons ---
+    document.getElementById('api-midi-export').addEventListener('click', function() {
+      if (!player) return;
+      var inst = player.instances.get(document.getElementById('demo-sky'));
+      var status = document.getElementById('midi-export-status');
+      if (!inst || !inst.currentScore) {
+        status.textContent = 'No score available. Play the image first.';
+        return;
+      }
+      var MidiExport = FloatImgPlay.MidiExport;
+      var opts = getOptionsFromUI();
+      MidiExport.exportAndDownload(inst.currentScore, { bpm: opts.audio.tempo }, 'sky-imgplay.mid');
+      status.textContent = 'Exported sky-imgplay.mid';
+    });
+
+    document.getElementById('api-midi-export-all').addEventListener('click', function() {
+      if (!player) return;
+      var MidiExport = FloatImgPlay.MidiExport;
+      var opts = getOptionsFromUI();
+      var status = document.getElementById('midi-export-status');
+      var count = 0;
+      player.instances.forEach(function(inst) {
+        if (inst.currentScore) {
+          var name = (inst.source.fileName || 'image') + '.mid';
+          MidiExport.exportAndDownload(inst.currentScore, { bpm: opts.audio.tempo }, name);
+          count++;
+        }
+      });
+      status.textContent = count > 0 ? 'Exported ' + count + ' MIDI file(s)' : 'No scores available. Play images first.';
     });
 
     // --- Init ---

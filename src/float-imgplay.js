@@ -1,5 +1,5 @@
 /*!
- * FloatImgPlay v2.0.0
+ * FloatImgPlay v2.0.0 — Modular Architecture
  * Image-to-sound player. Scans pixel data and generates rule-based music via Web Audio API.
  * Modular architecture with Engine interface and Mode Router.
  */
@@ -220,8 +220,65 @@ export class FloatImgPlay {
         brightDuration: 0.26,
         blueDuration: 0.46,
         neutralDuration: 0.34
+      },
+      security: {
+        allowedDomains: [],
+        maxFileSize: 10485760,
+        allowedMimeTypes: ["image/png", "image/jpeg", "image/webp", "image/gif"]
       }
     };
+  }
+
+  // --- Security ---
+
+  _checkUrlAllowed(url) {
+    const domains = this.options.security?.allowedDomains;
+    if (!domains || domains.length === 0) return true;
+    try {
+      const parsed = new URL(url, window.location.href);
+      return domains.some((d) => parsed.hostname === d || parsed.hostname.endsWith("." + d));
+    } catch {
+      return false;
+    }
+  }
+
+  _checkMimeType(mimeType) {
+    const allowed = this.options.security?.allowedMimeTypes;
+    if (!allowed || allowed.length === 0) return true;
+    if (!mimeType) return false;
+    const normalized = mimeType.split(";")[0].trim().toLowerCase();
+    return allowed.some((t) => t.toLowerCase() === normalized);
+  }
+
+  async _checkResourceSecurity(url) {
+    const maxSize = this.options.security?.maxFileSize;
+    const allowedMimes = this.options.security?.allowedMimeTypes;
+    if ((!maxSize || maxSize <= 0) && (!allowedMimes || allowedMimes.length === 0)) return true;
+
+    try {
+      const res = await fetch(url, { method: "HEAD", mode: "cors" });
+      if (!res.ok) return true; // let the actual fetch handle the error
+
+      if (maxSize && maxSize > 0) {
+        const contentLength = res.headers.get("content-length");
+        if (contentLength && Number(contentLength) > maxSize) {
+          console.warn("[FloatImgPlay] File exceeds maxFileSize (" + maxSize + " bytes):", url);
+          return false;
+        }
+      }
+
+      if (allowedMimes && allowedMimes.length > 0) {
+        const contentType = res.headers.get("content-type");
+        if (contentType && !this._checkMimeType(contentType)) {
+          console.warn("[FloatImgPlay] MIME type not allowed (" + contentType + "):", url);
+          return false;
+        }
+      }
+
+      return true;
+    } catch {
+      return true; // allow if HEAD fails (CORS, etc.)
+    }
   }
 
   // --- Audio Context ---
@@ -262,18 +319,30 @@ export class FloatImgPlay {
 
     if (el.tagName === "IMG" && el.currentSrc || el.tagName === "IMG" && el.src) {
       const src = el.currentSrc || el.src;
+      if (!this._checkUrlAllowed(src)) {
+        console.warn("[FloatImgPlay] URL blocked by allowedDomains:", src);
+        return null;
+      }
       return { type: "img", url: src, fileName: fileNameFromUrl(src), imgEl: el };
     }
 
     const childImg = el.querySelector("img");
     if (childImg && (childImg.currentSrc || childImg.src)) {
       const src = childImg.currentSrc || childImg.src;
+      if (!this._checkUrlAllowed(src)) {
+        console.warn("[FloatImgPlay] URL blocked by allowedDomains:", src);
+        return null;
+      }
       return { type: "img-child", url: src, fileName: fileNameFromUrl(src), imgEl: childImg };
     }
 
     const bg = getComputedStyle(el).backgroundImage;
     const url = extractCssUrl(bg);
     if (url) {
+      if (!this._checkUrlAllowed(url)) {
+        console.warn("[FloatImgPlay] URL blocked by allowedDomains:", url);
+        return null;
+      }
       return { type: "background", url, fileName: fileNameFromUrl(url), imgEl: null };
     }
 
@@ -282,13 +351,16 @@ export class FloatImgPlay {
 
   // --- Analysis (delegates to engine) ---
 
-  _prepareAnalysis(inst) {
-    inst.engine.analyze(inst.source, inst.opts.audio).then(({ score, meta }) => {
+  async _prepareAnalysis(inst) {
+    try {
+      const securityOk = await this._checkResourceSecurity(inst.source.url);
+      if (!securityOk) return;
+      const { score, meta } = await inst.engine.analyze(inst.source, inst.opts.audio);
       inst.currentScore = score;
       inst.currentMeta = meta;
-    }).catch((err) => {
+    } catch (err) {
       console.warn("[FloatImgPlay] analyze failed:", err);
-    });
+    }
   }
 
   // --- Play / Stop (delegates to engine) ---
@@ -321,6 +393,12 @@ export class FloatImgPlay {
         if (inst.meta.midi.data) {
           parsed = MidiEngine.parseBase64(inst.meta.midi.data);
         } else if (inst.meta.midi.url) {
+          if (!this._checkUrlAllowed(inst.meta.midi.url)) {
+            console.warn("[FloatImgPlay] MIDI URL blocked by allowedDomains:", inst.meta.midi.url);
+            return;
+          }
+          const midiSecure = await this._checkResourceSecurity(inst.meta.midi.url);
+          if (!midiSecure) return;
           parsed = await MidiEngine.fetchAndParse(inst.meta.midi.url);
         }
         if (parsed) inst.currentScore = parsed;
@@ -333,6 +411,12 @@ export class FloatImgPlay {
     // AudioEngine: fetch and decode audio buffer before play
     if (inst.engine instanceof AudioEngine && inst.meta?.audio?.url && !inst.currentScore?.audioBuffer) {
       try {
+        if (!this._checkUrlAllowed(inst.meta.audio.url)) {
+          console.warn("[FloatImgPlay] Audio URL blocked by allowedDomains:", inst.meta.audio.url);
+          return;
+        }
+        const audioSecure = await this._checkResourceSecurity(inst.meta.audio.url);
+        if (!audioSecure) return;
         const audioBuffer = await AudioEngine.fetchAndDecode(inst.meta.audio.url, ctx);
         inst.currentScore = { audioBuffer, audioUrl: inst.meta.audio.url };
       } catch (err) {

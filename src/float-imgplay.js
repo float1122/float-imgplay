@@ -84,6 +84,18 @@ export class FloatImgPlay {
 
     this.instances.set(el, inst);
 
+    // Async meta parse — may upgrade engine if meta found
+    MetaParser.parseAsync(source).then((asyncMeta) => {
+      if (asyncMeta.midi || asyncMeta.audio || asyncMeta.engine) {
+        inst.meta = asyncMeta;
+        inst.engine = this._resolveEngine(source, asyncMeta);
+        if (asyncMeta.engine) {
+          inst.opts.audio = mergeDeep(inst.opts.audio, asyncMeta.engine);
+        }
+        this._prepareAnalysis(inst);
+      }
+    }).catch(() => {});
+
     if (inst.opts.autoplay) {
       inst.pendingAutoplay = true;
       this._maybeAutoplay(inst);
@@ -131,6 +143,17 @@ export class FloatImgPlay {
       inst.meta = MetaParser.parse(inst.source);
       inst.engine = this._resolveEngine(inst.source, inst.meta);
       this._prepareAnalysis(inst);
+
+      MetaParser.parseAsync(inst.source).then((asyncMeta) => {
+        if (asyncMeta.midi || asyncMeta.audio || asyncMeta.engine) {
+          inst.meta = asyncMeta;
+          inst.engine = this._resolveEngine(inst.source, asyncMeta);
+          if (asyncMeta.engine) {
+            inst.opts.audio = mergeDeep(inst.opts.audio, asyncMeta.engine);
+          }
+          this._prepareAnalysis(inst);
+        }
+      }).catch(() => {});
     });
     this._tickVisibility();
   }

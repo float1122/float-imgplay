@@ -2091,6 +2091,8 @@ var FloatImgPlay = (function (exports) {
 
       if (inst.ui?.playBtn) inst.ui.playBtn.removeEventListener("click", inst._onPlayClick);
       if (inst.ui?.volumeInput) inst.ui.volumeInput.removeEventListener("input", inst._onVolumeInput);
+      if (inst.ui?.speedInput) inst.ui.speedInput.removeEventListener("input", inst._onSpeedInput);
+      if (inst.ui?.settingsBtn) inst.ui.settingsBtn.removeEventListener("click", inst._onSettingsClick);
       if (inst.el) inst.el.removeEventListener("click", inst._onElClick);
 
       if (inst.ui?.root && inst.ui.root.parentNode) {
@@ -2114,6 +2116,20 @@ var FloatImgPlay = (function (exports) {
 
     pause(target) {
       this.stop(target);
+    }
+
+    playAll() {
+      this.instances.forEach((inst) => {
+        this._playInstance(inst);
+      });
+      return this;
+    }
+
+    stopAll() {
+      this.instances.forEach((inst) => {
+        this._stopInstance(inst);
+      });
+      return this;
     }
 
     refresh() {
@@ -2155,6 +2171,9 @@ var FloatImgPlay = (function (exports) {
         stopWhenHidden: true,
         showPlayOverlay: true,
         showVolumeControl: true,
+        showSpeedControl: false,
+        showSettingsButton: false,
+        clickToPlay: true,
         overlayIcon: "\u25B6",
         overlayPlayText: "",
         occlusionSamplePoints: [
@@ -2173,7 +2192,11 @@ var FloatImgPlay = (function (exports) {
           ui: "float-imgplay-ui",
           playBtn: "float-imgplay-play",
           volumeWrap: "float-imgplay-volume",
-          volumeInput: "float-imgplay-volume-input"
+          volumeInput: "float-imgplay-volume-input",
+          speedWrap: "float-imgplay-speed",
+          speedInput: "float-imgplay-speed-input",
+          settingsBtn: "float-imgplay-settings",
+          settingsPopup: "float-imgplay-settings-popup"
         },
         audio: {
           masterVolume: 0.25,
@@ -2470,7 +2493,7 @@ var FloatImgPlay = (function (exports) {
     _buildUI(inst) {
       if (inst.hasRenderedUI) return;
 
-      const { classNames, showPlayOverlay, showVolumeControl, overlayIcon, overlayPlayText, zIndexUI, audio } = inst.opts;
+      const { classNames, showPlayOverlay, showVolumeControl, showSpeedControl, showSettingsButton, overlayIcon, overlayPlayText, zIndexUI, audio } = inst.opts;
       const el = inst.el;
 
       const currentPosition = getComputedStyle(el).position;
@@ -2526,8 +2549,9 @@ var FloatImgPlay = (function (exports) {
         volumeWrap.className = classNames.volumeWrap;
         Object.assign(volumeWrap.style, {
           position: "absolute",
-          right: "10px",
-          bottom: "10px",
+          right: "6px",
+          top: "50%",
+          transform: "translateY(-50%)",
           pointerEvents: "auto",
           background: "rgba(0,0,0,0.48)",
           color: "#fff",
@@ -2535,13 +2559,10 @@ var FloatImgPlay = (function (exports) {
           borderRadius: "14px",
           backdropFilter: "blur(8px)",
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
           gap: "8px"
         });
-
-        const label = document.createElement("span");
-        label.textContent = "\u{1F50A}";
-        label.style.fontSize = "12px";
 
         volumeInput = document.createElement("input");
         volumeInput.type = "range";
@@ -2550,17 +2571,108 @@ var FloatImgPlay = (function (exports) {
         volumeInput.step = "0.01";
         volumeInput.value = String(audio.masterVolume);
         volumeInput.className = classNames.volumeInput;
-        volumeInput.style.width = "88px";
+        volumeInput.setAttribute("orient", "vertical");
+        Object.assign(volumeInput.style, {
+          writingMode: "vertical-lr",
+          direction: "rtl",
+          width: "20px",
+          height: "70px",
+          appearance: "slider-vertical",
+          WebkitAppearance: "slider-vertical"
+        });
 
-        volumeWrap.appendChild(label);
+        const label = document.createElement("span");
+        label.textContent = "\u{1F50A}";
+        label.style.fontSize = "11px";
+
         volumeWrap.appendChild(volumeInput);
+        volumeWrap.appendChild(label);
         uiRoot.appendChild(volumeWrap);
+      }
+
+      let speedWrap = null;
+      let speedInput = null;
+      let speedLabel = null;
+      if (showSpeedControl) {
+        speedWrap = document.createElement("div");
+        speedWrap.className = classNames.speedWrap;
+        Object.assign(speedWrap.style, {
+          position: "absolute",
+          left: "8px",
+          bottom: "8px",
+          pointerEvents: "auto",
+          background: "rgba(0,0,0,0.48)",
+          color: "#fff",
+          padding: "8px 10px",
+          borderRadius: "14px",
+          backdropFilter: "blur(8px)",
+          display: "flex",
+          alignItems: "center",
+          gap: "6px"
+        });
+
+        const turtleSpan = document.createElement("span");
+        turtleSpan.textContent = "\u{1F422}";
+
+        speedInput = document.createElement("input");
+        speedInput.type = "range";
+        speedInput.min = "40";
+        speedInput.max = "240";
+        speedInput.step = "1";
+        speedInput.value = String(audio.tempo);
+        speedInput.className = classNames.speedInput;
+        speedInput.style.width = "70px";
+
+        const rabbitSpan = document.createElement("span");
+        rabbitSpan.textContent = "\u{1F407}";
+
+        speedLabel = document.createElement("span");
+        speedLabel.textContent = String(audio.tempo);
+
+        speedWrap.appendChild(turtleSpan);
+        speedWrap.appendChild(speedInput);
+        speedWrap.appendChild(rabbitSpan);
+        speedWrap.appendChild(speedLabel);
+        uiRoot.appendChild(speedWrap);
+      }
+
+      let settingsBtn = null;
+      let settingsPopupEl = null;
+      if (showSettingsButton) {
+        settingsBtn = document.createElement("button");
+        settingsBtn.type = "button";
+        settingsBtn.className = classNames.settingsBtn;
+        settingsBtn.setAttribute("aria-label", "Settings");
+        settingsBtn.textContent = "\u2699";
+        Object.assign(settingsBtn.style, {
+          position: "absolute",
+          top: "8px",
+          right: showVolumeControl ? "36px" : "8px",
+          pointerEvents: "auto",
+          border: "0",
+          borderRadius: "50%",
+          width: "32px",
+          height: "32px",
+          fontSize: "16px",
+          lineHeight: "1",
+          background: "rgba(0,0,0,0.55)",
+          color: "#fff",
+          backdropFilter: "blur(10px)",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center"
+        });
+        uiRoot.appendChild(settingsBtn);
+
+        settingsPopupEl = this._buildSettingsPopup(inst);
+        uiRoot.appendChild(settingsPopupEl);
       }
 
       el.classList.add(classNames.initialized);
       el.appendChild(uiRoot);
 
-      inst.ui = { root: uiRoot, playBtn, volumeWrap, volumeInput };
+      inst.ui = { root: uiRoot, playBtn, volumeWrap, volumeInput, speedWrap, speedInput, speedLabel, settingsBtn, settingsPopup: settingsPopupEl };
       inst.hasRenderedUI = true;
     }
 
@@ -2584,6 +2696,348 @@ var FloatImgPlay = (function (exports) {
       btn.appendChild(iconSpan);
     }
 
+    _buildSettingsPopup(inst) {
+      const { classNames } = inst.opts;
+      const popup = document.createElement("div");
+      popup.className = classNames.settingsPopup;
+      Object.assign(popup.style, {
+        position: "absolute",
+        inset: "0",
+        background: "rgba(0,0,0,0.88)",
+        backdropFilter: "blur(12px)",
+        overflowY: "auto",
+        padding: "12px",
+        display: "flex",
+        flexDirection: "column",
+        gap: "8px",
+        zIndex: String(inst.opts.zIndexUI + 10),
+        fontSize: "11px",
+        color: "#fff"
+      });
+
+      // --- Header row ---
+      const header = document.createElement("div");
+      Object.assign(header.style, { display: "flex", justifyContent: "space-between", alignItems: "center" });
+      const title = document.createElement("span");
+      title.textContent = "Settings";
+      title.style.fontWeight = "bold";
+      title.style.fontSize = "13px";
+      const closeBtn = document.createElement("button");
+      closeBtn.type = "button";
+      closeBtn.textContent = "\u2715";
+      Object.assign(closeBtn.style, {
+        background: "none", border: "0", color: "#fff", fontSize: "14px", cursor: "pointer", padding: "4px"
+      });
+      header.appendChild(title);
+      header.appendChild(closeBtn);
+      popup.appendChild(header);
+
+      // --- State ---
+      let selectedInstrument = null;
+      let selectedEnsemble = null;
+
+      const pillStyle = {
+        border: "1px solid rgba(255,255,255,0.2)",
+        background: "rgba(255,255,255,0.08)",
+        borderRadius: "12px",
+        padding: "3px 8px",
+        fontSize: "10px",
+        color: "#fff",
+        cursor: "pointer"
+      };
+      const activePillStyle = {
+        background: "rgba(108,92,231,0.5)",
+        border: "1px solid #6c5ce7"
+      };
+
+      function highlightPills() {
+        instrPills.forEach((p) => {
+          if ((selectedInstrument === null && p._presetKey === "none") || p._presetKey === selectedInstrument) {
+            Object.assign(p.style, activePillStyle);
+          } else {
+            p.style.background = "rgba(255,255,255,0.08)";
+            p.style.border = "1px solid rgba(255,255,255,0.2)";
+          }
+        });
+        ensemblePills.forEach((p) => {
+          if (p._presetKey === selectedEnsemble) {
+            Object.assign(p.style, activePillStyle);
+          } else {
+            p.style.background = "rgba(255,255,255,0.08)";
+            p.style.border = "1px solid rgba(255,255,255,0.2)";
+          }
+        });
+      }
+
+      // --- Instruments section ---
+      const instrTitle = document.createElement("div");
+      instrTitle.textContent = "Instruments";
+      instrTitle.style.fontWeight = "bold";
+      popup.appendChild(instrTitle);
+
+      const instrGrid = document.createElement("div");
+      Object.assign(instrGrid.style, { display: "flex", flexWrap: "wrap", gap: "4px" });
+
+      const instrPills = [];
+
+      // "none" / Default pill
+      const nonePill = document.createElement("button");
+      nonePill.type = "button";
+      nonePill.textContent = "Default";
+      nonePill._presetKey = "none";
+      Object.assign(nonePill.style, pillStyle);
+      nonePill.addEventListener("click", () => {
+        selectedInstrument = null;
+        selectedEnsemble = null;
+        highlightPills();
+      });
+      instrPills.push(nonePill);
+      instrGrid.appendChild(nonePill);
+
+      Object.keys(INSTRUMENT_PRESETS).forEach((key) => {
+        const pill = document.createElement("button");
+        pill.type = "button";
+        pill.textContent = INSTRUMENT_PRESETS[key].name;
+        pill._presetKey = key;
+        Object.assign(pill.style, pillStyle);
+        pill.addEventListener("click", () => {
+          selectedInstrument = key;
+          selectedEnsemble = null;
+          highlightPills();
+        });
+        instrPills.push(pill);
+        instrGrid.appendChild(pill);
+      });
+      popup.appendChild(instrGrid);
+
+      // --- Ensembles section ---
+      const ensTitle = document.createElement("div");
+      ensTitle.textContent = "Ensembles";
+      ensTitle.style.fontWeight = "bold";
+      popup.appendChild(ensTitle);
+
+      const ensGrid = document.createElement("div");
+      Object.assign(ensGrid.style, { display: "flex", flexWrap: "wrap", gap: "4px" });
+
+      const ensemblePills = [];
+      Object.keys(ENSEMBLE_PRESETS).forEach((key) => {
+        const pill = document.createElement("button");
+        pill.type = "button";
+        pill.textContent = ENSEMBLE_PRESETS[key].name;
+        pill._presetKey = key;
+        Object.assign(pill.style, pillStyle);
+        pill.addEventListener("click", () => {
+          selectedEnsemble = key;
+          selectedInstrument = null;
+          highlightPills();
+        });
+        ensemblePills.push(pill);
+        ensGrid.appendChild(pill);
+      });
+      popup.appendChild(ensGrid);
+
+      // --- Advanced toggle ---
+      const advToggle = document.createElement("button");
+      advToggle.type = "button";
+      advToggle.textContent = "\u25B8 Advanced";
+      Object.assign(advToggle.style, {
+        background: "none", border: "0", color: "#fff", fontSize: "11px", cursor: "pointer",
+        padding: "4px 0", textAlign: "left"
+      });
+      popup.appendChild(advToggle);
+
+      // --- Advanced panel ---
+      const advPanel = document.createElement("div");
+      Object.assign(advPanel.style, { display: "none", flexDirection: "column", gap: "4px" });
+
+      advToggle.addEventListener("click", () => {
+        if (advPanel.style.display === "none") {
+          advPanel.style.display = "flex";
+          advToggle.textContent = "\u25BE Advanced";
+        } else {
+          advPanel.style.display = "none";
+          advToggle.textContent = "\u25B8 Advanced";
+        }
+      });
+
+      const selectStyle = { background: "#252542", border: "1px solid #3a3a5a", color: "#fff", fontSize: "10px", borderRadius: "4px", padding: "2px 4px" };
+
+      const advInputs = {};
+
+      const advOptions = [
+        { key: "waveform", label: "Waveform", type: "select", options: ["sine", "square", "sawtooth", "triangle"] },
+        { key: "tempo", label: "Tempo", type: "range", min: 40, max: 240, step: 1 },
+        { key: "masterVolume", label: "Volume", type: "range", min: 0, max: 1, step: 0.01 },
+        { key: "scaleMode", label: "Scale", type: "select", options: ["auto", "major", "minor", "pentatonic", "blues", "chromatic", "dorian", "mixolydian"] },
+        { key: "rootMode", label: "Root Mode", type: "select", options: ["filename-first-char", "fixed", "auto"] },
+        { key: "fixedRootMidi", label: "Root MIDI", type: "range", min: 36, max: 84, step: 1 },
+        { key: "pitchShiftSemitones", label: "Pitch Shift", type: "range", min: -24, max: 24, step: 1 },
+        { key: "filterType", label: "Filter", type: "select", options: ["lowpass", "highpass", "bandpass", "notch"] },
+        { key: "filterBaseHz", label: "Filter Hz", type: "range", min: 100, max: 8000, step: 1 },
+        { key: "filterVelocityAmount", label: "Filter Vel", type: "range", min: 0, max: 8000, step: 1 },
+        { key: "attack", label: "Attack", type: "range", min: 0.001, max: 0.5, step: 0.001 },
+        { key: "release", label: "Release", type: "range", min: 0.001, max: 0.5, step: 0.001 },
+        { key: "noteDurationBeats", label: "Note Dur", type: "range", min: 0.1, max: 2, step: 0.05 },
+        { key: "sampleColumns", label: "Columns", type: "range", min: 4, max: 64, step: 1 },
+        { key: "restThreshold", label: "Rest Thresh", type: "range", min: 0, max: 128, step: 1 },
+        { key: "brightDuration", label: "Bright Dur", type: "range", min: 0.05, max: 1, step: 0.01 },
+        { key: "blueDuration", label: "Blue Dur", type: "range", min: 0.05, max: 1, step: 0.01 },
+        { key: "neutralDuration", label: "Neutral Dur", type: "range", min: 0.05, max: 1, step: 0.01 }
+      ];
+
+      advOptions.forEach((opt) => {
+        const row = document.createElement("div");
+        Object.assign(row.style, { display: "flex", alignItems: "center", gap: "6px" });
+
+        const lbl = document.createElement("label");
+        lbl.textContent = opt.label;
+        lbl.style.minWidth = "70px";
+        lbl.style.fontSize = "10px";
+        row.appendChild(lbl);
+
+        const currentVal = inst.opts.audio[opt.key];
+
+        if (opt.type === "range") {
+          const input = document.createElement("input");
+          input.type = "range";
+          input.min = String(opt.min);
+          input.max = String(opt.max);
+          input.step = String(opt.step);
+          input.value = String(currentVal);
+          input.style.flex = "1";
+          input.style.height = "14px";
+          row.appendChild(input);
+
+          const valSpan = document.createElement("span");
+          valSpan.textContent = String(currentVal);
+          valSpan.style.minWidth = "32px";
+          valSpan.style.fontSize = "10px";
+          valSpan.style.textAlign = "right";
+          row.appendChild(valSpan);
+
+          input.addEventListener("input", () => {
+            valSpan.textContent = input.value;
+          });
+
+          advInputs[opt.key] = input;
+        } else if (opt.type === "select") {
+          const sel = document.createElement("select");
+          Object.assign(sel.style, selectStyle);
+          sel.style.flex = "1";
+          opt.options.forEach((o) => {
+            const optEl = document.createElement("option");
+            optEl.value = o;
+            optEl.textContent = o;
+            if (o === String(currentVal)) optEl.selected = true;
+            sel.appendChild(optEl);
+          });
+          row.appendChild(sel);
+          advInputs[opt.key] = sel;
+        }
+
+        advPanel.appendChild(row);
+      });
+
+      popup.appendChild(advPanel);
+
+      // --- Button row ---
+      const btnRow = document.createElement("div");
+      Object.assign(btnRow.style, { display: "flex", gap: "6px", marginTop: "4px" });
+
+      const applyBtn = document.createElement("button");
+      applyBtn.type = "button";
+      applyBtn.textContent = "Apply";
+      Object.assign(applyBtn.style, {
+        flex: "1", padding: "6px", border: "0", borderRadius: "6px",
+        background: "#6c5ce7", color: "#fff", fontSize: "11px", cursor: "pointer"
+      });
+
+      const resetBtn = document.createElement("button");
+      resetBtn.type = "button";
+      resetBtn.textContent = "Reset";
+      Object.assign(resetBtn.style, {
+        flex: "1", padding: "6px", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "6px",
+        background: "rgba(255,255,255,0.08)", color: "#fff", fontSize: "11px", cursor: "pointer"
+      });
+
+      btnRow.appendChild(applyBtn);
+      btnRow.appendChild(resetBtn);
+      popup.appendChild(btnRow);
+
+      // --- Event wiring ---
+      closeBtn.addEventListener("click", () => { popup.style.display = "none"; });
+
+      applyBtn.addEventListener("click", () => {
+        this._applySettingsToInstance(inst, selectedInstrument, selectedEnsemble, advInputs);
+        popup.style.display = "none";
+      });
+
+      resetBtn.addEventListener("click", () => {
+        selectedInstrument = null;
+        selectedEnsemble = null;
+        highlightPills();
+        const defaults = this._defaults().audio;
+        Object.keys(advInputs).forEach((key) => {
+          const el = advInputs[key];
+          if (defaults[key] !== undefined) {
+            el.value = String(defaults[key]);
+            // Update value display for range inputs
+            if (el.type === "range") {
+              const valSpan = el.parentElement.querySelector("span");
+              if (valSpan) valSpan.textContent = String(defaults[key]);
+            }
+          }
+        });
+      });
+
+      // Initial highlight
+      highlightPills();
+
+      popup.style.display = "none";
+      return popup;
+    }
+
+    _applySettingsToInstance(inst, instrumentName, ensembleName, advInputs) {
+      // Read advanced values
+      Object.keys(advInputs).forEach((key) => {
+        const el = advInputs[key];
+        const val = el.value;
+        if (el.type === "range") {
+          inst.opts.audio[key] = Number(val);
+        } else {
+          inst.opts.audio[key] = val;
+        }
+      });
+
+      // Resolve instrument/ensemble
+      if (ensembleName) {
+        try {
+          inst.opts.audio._instruments = resolveEnsemble(ensembleName);
+        } catch { inst.opts.audio._instruments = null; }
+      } else if (instrumentName) {
+        try {
+          inst.opts.audio._instruments = [resolveInstrument(instrumentName)];
+        } catch { inst.opts.audio._instruments = null; }
+      } else {
+        inst.opts.audio._instruments = null;
+      }
+
+      // Re-analyze and stop current playback
+      this._stopInstance(inst);
+      inst.currentScore = null;
+      inst.currentMeta = null;
+      this._prepareAnalysis(inst);
+
+      // Sync speed/volume sliders if present
+      if (inst.ui?.speedInput) {
+        inst.ui.speedInput.value = String(inst.opts.audio.tempo);
+        if (inst.ui.speedLabel) inst.ui.speedLabel.textContent = inst.opts.audio.tempo + "";
+      }
+      if (inst.ui?.volumeInput) {
+        inst.ui.volumeInput.value = String(inst.opts.audio.masterVolume);
+      }
+    }
+
     // --- Events ---
 
     _bindInstanceEvents(inst) {
@@ -2601,6 +3055,15 @@ var FloatImgPlay = (function (exports) {
         if (inst.ui?.volumeInput && (e.target === inst.ui.volumeInput || inst.ui.volumeWrap?.contains(e.target))) {
           return;
         }
+        if (inst.ui?.speedInput && (e.target === inst.ui.speedInput || inst.ui.speedWrap?.contains(e.target))) {
+          return;
+        }
+        if (inst.ui?.settingsBtn && (e.target === inst.ui.settingsBtn || inst.ui.settingsPopup?.contains(e.target))) {
+          return;
+        }
+        if (inst.opts.clickToPlay === false) {
+          return;
+        }
         if (!inst.ui?.playBtn) {
           if (inst.isPlaying) this._stopInstance(inst);
           else this._playInstance(inst);
@@ -2612,8 +3075,33 @@ var FloatImgPlay = (function (exports) {
         inst.opts.audio.masterVolume = v;
       };
 
+      inst._onSpeedInput = (e) => {
+        const bpm = Number(e.target.value);
+        inst.opts.audio.tempo = bpm;
+        if (inst.ui?.speedLabel) inst.ui.speedLabel.textContent = bpm + "";
+        if (inst.isPlaying) {
+          this._stopInstance(inst);
+          inst.currentScore = null;
+          this._prepareAnalysis(inst);
+          this._playInstance(inst);
+        }
+      };
+
       if (inst.ui?.playBtn) inst.ui.playBtn.addEventListener("click", inst._onPlayClick);
       if (inst.ui?.volumeInput) inst.ui.volumeInput.addEventListener("input", inst._onVolumeInput);
+      if (inst.ui?.speedInput) inst.ui.speedInput.addEventListener("input", inst._onSpeedInput);
+
+      if (inst.ui?.settingsBtn) {
+        inst._onSettingsClick = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (inst.ui.settingsPopup) {
+            inst.ui.settingsPopup.style.display = inst.ui.settingsPopup.style.display === "none" ? "flex" : "none";
+          }
+        };
+        inst.ui.settingsBtn.addEventListener("click", inst._onSettingsClick);
+      }
+
       inst.el.addEventListener("click", inst._onElClick);
     }
 

@@ -187,20 +187,59 @@
 
     <!-- ============ LIVE DEMO ============ -->
     <div class="section">
-      <h2>Live Demo <span>Click an image to hear its sound</span></h2>
-
-      <div class="grid" id="demo-grid">
-        <div class="float-imgplay" id="demo-sky">
-          <img src="https://picsum.photos/seed/sky/320/320" alt="Sky" width="320" height="320">
+      <h2>Live Demo <span>8 images with different UI control combinations</span></h2>
+      <div class="btn-row" style="margin-bottom: 16px;">
+        <button class="btn btn-primary" id="btn-play-all">Play All</button>
+        <button class="btn btn-danger" id="btn-stop-all-demo">Stop All</button>
+      </div>
+      <div class="grid" id="demo-grid" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));">
+        <div>
+          <div class="float-imgplay" id="demo-1">
+            <img src="https://picsum.photos/seed/clouds/160/160" alt="Clouds" width="160" height="160">
+          </div>
+          <div style="text-align:center; font-size:10px; color:#666; margin-top:4px;">All Controls</div>
         </div>
-        <div class="float-imgplay" id="demo-forest">
-          <img src="https://picsum.photos/seed/forest/320/320" alt="Forest" width="320" height="320">
+        <div>
+          <div class="float-imgplay" id="demo-2">
+            <img src="https://picsum.photos/seed/volcano/160/160" alt="Volcano" width="160" height="160">
+          </div>
+          <div style="text-align:center; font-size:10px; color:#666; margin-top:4px;">No Controls (disabled)</div>
         </div>
-        <div class="float-imgplay" id="demo-ocean">
-          <img src="https://picsum.photos/seed/ocean/320/320" alt="Ocean" width="320" height="320">
+        <div>
+          <div class="float-imgplay" id="demo-3">
+            <img src="https://picsum.photos/seed/landscape/160/160" alt="Landscape" width="160" height="160">
+          </div>
+          <div style="text-align:center; font-size:10px; color:#666; margin-top:4px;">Play Only</div>
         </div>
-        <div class="float-imgplay" id="demo-mountain"
-             style="background-image:url('https://picsum.photos/seed/mountain/320/320'); width:100%; height:220px; background-size:cover;">
+        <div>
+          <div class="float-imgplay" id="demo-4">
+            <img src="https://picsum.photos/seed/portrait/160/160" alt="Portrait" width="160" height="160">
+          </div>
+          <div style="text-align:center; font-size:10px; color:#666; margin-top:4px;">Volume Only</div>
+        </div>
+        <div>
+          <div class="float-imgplay" id="demo-5">
+            <img src="https://picsum.photos/seed/city/160/160" alt="City" width="160" height="160">
+          </div>
+          <div style="text-align:center; font-size:10px; color:#666; margin-top:4px;">Speed Only</div>
+        </div>
+        <div>
+          <div class="float-imgplay" id="demo-6">
+            <img src="https://picsum.photos/seed/galaxy/160/160" alt="Galaxy" width="160" height="160">
+          </div>
+          <div style="text-align:center; font-size:10px; color:#666; margin-top:4px;">Play + Volume</div>
+        </div>
+        <div>
+          <div class="float-imgplay" id="demo-7">
+            <img src="https://picsum.photos/seed/food/160/160" alt="Food" width="160" height="160">
+          </div>
+          <div style="text-align:center; font-size:10px; color:#666; margin-top:4px;">Play + Speed</div>
+        </div>
+        <div>
+          <div class="float-imgplay" id="demo-8">
+            <img src="https://picsum.photos/seed/abstract/160/160" alt="Abstract" width="160" height="160">
+          </div>
+          <div style="text-align:center; font-size:10px; color:#666; margin-top:4px;">Speed + Volume</div>
         </div>
       </div>
     </div>
@@ -537,7 +576,7 @@
           <button class="btn btn-primary" id="api-reinit">player.init()</button>
         </div>
         <p class="desc" style="margin-top:12px">
-          play/stop targets the first image (Sky). destroy removes all instances. init re-initializes.
+          play/stop targets the first image (Clouds). destroy removes all instances. init re-initializes.
         </p>
       </div>
 
@@ -950,7 +989,6 @@ securePlayer.<span class="fn">init</span>();
     function initPlayer() {
       if (player) {
         player.destroy();
-        // Remove leftover UI
         document.querySelectorAll('.float-imgplay .float-imgplay-ui').forEach(function(el) {
           el.parentNode.removeChild(el);
         });
@@ -967,8 +1005,46 @@ securePlayer.<span class="fn">init</span>();
         opts.instruments = [{ preset: currentInstrument }];
       }
 
+      // Global defaults: all new controls OFF (demo per-element overrides below)
+      opts.showPlayOverlay = false;
+      opts.showVolumeControl = false;
+      opts.showSpeedControl = false;
+      opts.showSettingsButton = false;
+      opts.selector = '.float-imgplay-none';
+
       player = new FloatImgPlay.FloatImgPlay(opts);
       player.init();
+
+      // Register 8 demo images with individual UI combos
+      var demoConfigs = [
+        { id: 'demo-1', showPlayOverlay: true, showVolumeControl: true, showSpeedControl: true, showSettingsButton: true },
+        { id: 'demo-2', showPlayOverlay: false, showVolumeControl: false, showSpeedControl: false, showSettingsButton: false, clickToPlay: false },
+        { id: 'demo-3', showPlayOverlay: true },
+        { id: 'demo-4', showVolumeControl: true },
+        { id: 'demo-5', showSpeedControl: true },
+        { id: 'demo-6', showPlayOverlay: true, showVolumeControl: true },
+        { id: 'demo-7', showPlayOverlay: true, showSpeedControl: true },
+        { id: 'demo-8', showVolumeControl: true, showSpeedControl: true }
+      ];
+
+      demoConfigs.forEach(function(cfg) {
+        var el = document.getElementById(cfg.id);
+        if (el) {
+          var perOpts = {};
+          Object.keys(cfg).forEach(function(k) {
+            if (k !== 'id') perOpts[k] = cfg[k];
+          });
+          player.register(el, perOpts);
+        }
+      });
+
+      // Register uploaded images with default settings
+      document.querySelectorAll('#upload-grid .float-imgplay').forEach(function(el) {
+        if (!player.instances.has(el)) {
+          player.register(el, { showPlayOverlay: true, showVolumeControl: true });
+        }
+      });
+
       updateGeneratedCode();
     }
 
@@ -1068,12 +1144,19 @@ securePlayer.<span class="fn">init</span>();
       }
     });
 
+    document.getElementById('btn-play-all').addEventListener('click', function() {
+      if (player) player.playAll();
+    });
+    document.getElementById('btn-stop-all-demo').addEventListener('click', function() {
+      if (player) player.stopAll();
+    });
+
     // --- API buttons ---
     document.getElementById('api-play-first').addEventListener('click', function() {
-      if (player) player.play(document.getElementById('demo-sky'));
+      if (player) player.play(document.getElementById('demo-1'));
     });
     document.getElementById('api-stop-first').addEventListener('click', function() {
-      if (player) player.stop(document.getElementById('demo-sky'));
+      if (player) player.stop(document.getElementById('demo-1'));
     });
     document.getElementById('api-refresh').addEventListener('click', function() {
       if (player) player.refresh();
@@ -1122,7 +1205,7 @@ securePlayer.<span class="fn">init</span>();
     // --- MIDI Export buttons ---
     document.getElementById('api-midi-export').addEventListener('click', function() {
       if (!player) return;
-      var inst = player.instances.get(document.getElementById('demo-sky'));
+      var inst = player.instances.get(document.getElementById('demo-1'));
       var status = document.getElementById('midi-export-status');
       if (!inst || !inst.currentScore) {
         status.textContent = 'No score available. Play the image first.';

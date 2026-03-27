@@ -118,6 +118,7 @@ export class FloatImgPlay {
 
     if (inst.ui?.playBtn) inst.ui.playBtn.removeEventListener("click", inst._onPlayClick);
     if (inst.ui?.volumeInput) inst.ui.volumeInput.removeEventListener("input", inst._onVolumeInput);
+    if (inst.ui?.speedInput) inst.ui.speedInput.removeEventListener("input", inst._onSpeedInput);
     if (inst.el) inst.el.removeEventListener("click", inst._onElClick);
 
     if (inst.ui?.root && inst.ui.root.parentNode) {
@@ -141,6 +142,20 @@ export class FloatImgPlay {
 
   pause(target) {
     this.stop(target);
+  }
+
+  playAll() {
+    this.instances.forEach((inst) => {
+      this._playInstance(inst);
+    });
+    return this;
+  }
+
+  stopAll() {
+    this.instances.forEach((inst) => {
+      this._stopInstance(inst);
+    });
+    return this;
   }
 
   refresh() {
@@ -182,6 +197,9 @@ export class FloatImgPlay {
       stopWhenHidden: true,
       showPlayOverlay: true,
       showVolumeControl: true,
+      showSpeedControl: false,
+      showSettingsButton: false,
+      clickToPlay: true,
       overlayIcon: "\u25B6",
       overlayPlayText: "",
       occlusionSamplePoints: [
@@ -200,7 +218,11 @@ export class FloatImgPlay {
         ui: "float-imgplay-ui",
         playBtn: "float-imgplay-play",
         volumeWrap: "float-imgplay-volume",
-        volumeInput: "float-imgplay-volume-input"
+        volumeInput: "float-imgplay-volume-input",
+        speedWrap: "float-imgplay-speed",
+        speedInput: "float-imgplay-speed-input",
+        settingsBtn: "float-imgplay-settings",
+        settingsPopup: "float-imgplay-settings-popup"
       },
       audio: {
         masterVolume: 0.25,
@@ -497,7 +519,7 @@ export class FloatImgPlay {
   _buildUI(inst) {
     if (inst.hasRenderedUI) return;
 
-    const { classNames, showPlayOverlay, showVolumeControl, overlayIcon, overlayPlayText, zIndexUI, audio } = inst.opts;
+    const { classNames, showPlayOverlay, showVolumeControl, showSpeedControl, showSettingsButton, overlayIcon, overlayPlayText, zIndexUI, audio } = inst.opts;
     const el = inst.el;
 
     const currentPosition = getComputedStyle(el).position;
@@ -553,8 +575,9 @@ export class FloatImgPlay {
       volumeWrap.className = classNames.volumeWrap;
       Object.assign(volumeWrap.style, {
         position: "absolute",
-        right: "10px",
-        bottom: "10px",
+        right: "6px",
+        top: "50%",
+        transform: "translateY(-50%)",
         pointerEvents: "auto",
         background: "rgba(0,0,0,0.48)",
         color: "#fff",
@@ -562,13 +585,10 @@ export class FloatImgPlay {
         borderRadius: "14px",
         backdropFilter: "blur(8px)",
         display: "flex",
+        flexDirection: "column",
         alignItems: "center",
         gap: "8px"
       });
-
-      const label = document.createElement("span");
-      label.textContent = "\u{1F50A}";
-      label.style.fontSize = "12px";
 
       volumeInput = document.createElement("input");
       volumeInput.type = "range";
@@ -577,17 +597,75 @@ export class FloatImgPlay {
       volumeInput.step = "0.01";
       volumeInput.value = String(audio.masterVolume);
       volumeInput.className = classNames.volumeInput;
-      volumeInput.style.width = "88px";
+      volumeInput.setAttribute("orient", "vertical");
+      Object.assign(volumeInput.style, {
+        writingMode: "vertical-lr",
+        direction: "rtl",
+        width: "20px",
+        height: "70px",
+        appearance: "slider-vertical",
+        WebkitAppearance: "slider-vertical"
+      });
 
-      volumeWrap.appendChild(label);
+      const label = document.createElement("span");
+      label.textContent = "\u{1F50A}";
+      label.style.fontSize = "11px";
+
       volumeWrap.appendChild(volumeInput);
+      volumeWrap.appendChild(label);
       uiRoot.appendChild(volumeWrap);
+    }
+
+    let speedWrap = null;
+    let speedInput = null;
+    let speedLabel = null;
+    if (showSpeedControl) {
+      speedWrap = document.createElement("div");
+      speedWrap.className = classNames.speedWrap;
+      Object.assign(speedWrap.style, {
+        position: "absolute",
+        left: "8px",
+        bottom: "8px",
+        pointerEvents: "auto",
+        background: "rgba(0,0,0,0.48)",
+        color: "#fff",
+        padding: "8px 10px",
+        borderRadius: "14px",
+        backdropFilter: "blur(8px)",
+        display: "flex",
+        alignItems: "center",
+        gap: "6px"
+      });
+
+      const turtleSpan = document.createElement("span");
+      turtleSpan.textContent = "\u{1F422}";
+
+      speedInput = document.createElement("input");
+      speedInput.type = "range";
+      speedInput.min = "40";
+      speedInput.max = "240";
+      speedInput.step = "1";
+      speedInput.value = String(audio.tempo);
+      speedInput.className = classNames.speedInput;
+      speedInput.style.width = "70px";
+
+      const rabbitSpan = document.createElement("span");
+      rabbitSpan.textContent = "\u{1F407}";
+
+      speedLabel = document.createElement("span");
+      speedLabel.textContent = String(audio.tempo);
+
+      speedWrap.appendChild(turtleSpan);
+      speedWrap.appendChild(speedInput);
+      speedWrap.appendChild(rabbitSpan);
+      speedWrap.appendChild(speedLabel);
+      uiRoot.appendChild(speedWrap);
     }
 
     el.classList.add(classNames.initialized);
     el.appendChild(uiRoot);
 
-    inst.ui = { root: uiRoot, playBtn, volumeWrap, volumeInput };
+    inst.ui = { root: uiRoot, playBtn, volumeWrap, volumeInput, speedWrap, speedInput, speedLabel };
     inst.hasRenderedUI = true;
   }
 
@@ -628,6 +706,12 @@ export class FloatImgPlay {
       if (inst.ui?.volumeInput && (e.target === inst.ui.volumeInput || inst.ui.volumeWrap?.contains(e.target))) {
         return;
       }
+      if (inst.ui?.speedInput && (e.target === inst.ui.speedInput || inst.ui.speedWrap?.contains(e.target))) {
+        return;
+      }
+      if (inst.opts.clickToPlay === false) {
+        return;
+      }
       if (!inst.ui?.playBtn) {
         if (inst.isPlaying) this._stopInstance(inst);
         else this._playInstance(inst);
@@ -639,8 +723,21 @@ export class FloatImgPlay {
       inst.opts.audio.masterVolume = v;
     };
 
+    inst._onSpeedInput = (e) => {
+      const bpm = Number(e.target.value);
+      inst.opts.audio.tempo = bpm;
+      if (inst.ui?.speedLabel) inst.ui.speedLabel.textContent = bpm + "";
+      if (inst.isPlaying) {
+        this._stopInstance(inst);
+        inst.currentScore = null;
+        this._prepareAnalysis(inst);
+        this._playInstance(inst);
+      }
+    };
+
     if (inst.ui?.playBtn) inst.ui.playBtn.addEventListener("click", inst._onPlayClick);
     if (inst.ui?.volumeInput) inst.ui.volumeInput.addEventListener("input", inst._onVolumeInput);
+    if (inst.ui?.speedInput) inst.ui.speedInput.addEventListener("input", inst._onSpeedInput);
     inst.el.addEventListener("click", inst._onElClick);
   }
 

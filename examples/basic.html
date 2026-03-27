@@ -141,22 +141,54 @@
       max-height: 400px; overflow-y: auto;
     }
 
-    /* --- Presets --- */
-    .presets-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-      gap: 6px;
+    /* --- Mixer Strip --- */
+    .mixer-strip {
+      background: #13132a;
+      border: 1px solid #2a2a3e;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
     }
-    .preset-card {
-      background: #16162a; border: 1px solid #2a2a3e; border-radius: 8px;
-      padding: 8px 10px; cursor: pointer; transition: all 0.2s;
-      text-align: center;
+    .mixer-row {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 6px;
     }
-    .preset-card:hover { background: #1e1e3a; border-color: #6c5ce7; transform: translateY(-1px); }
-    .preset-card.active { background: #252542; border-color: #6c5ce7; box-shadow: 0 0 8px rgba(108,92,231,0.3); }
-    .preset-card .preset-icon { font-size: 16px; margin-bottom: 2px; }
-    .preset-card .preset-name { font-size: 11px; font-weight: 600; color: #fff; }
-    .preset-card .preset-desc { font-size: 9px; color: #666; margin-top: 2px; }
+    .mixer-row:last-child { margin-bottom: 0; }
+    .mixer-label {
+      font-size: 9px;
+      font-weight: 700;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      min-width: 56px;
+      flex-shrink: 0;
+    }
+    .mixer-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .mixer-pill {
+      padding: 3px 8px;
+      border: 1px solid #2a2a3e;
+      border-radius: 4px;
+      background: transparent;
+      color: #777;
+      font-size: 10px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.12s;
+      white-space: nowrap;
+      font-family: inherit;
+    }
+    .mixer-pill:hover { color: #bbb; border-color: #444; }
+    .mixer-pill.active {
+      color: #fff;
+      background: rgba(108,92,231,0.35);
+      border-color: #6c5ce7;
+    }
 
     /* --- Upload --- */
     .upload-zone {
@@ -189,9 +221,62 @@
     <!-- ============ LIVE DEMO ============ -->
     <div class="section">
       <h2>Live Demo <span>10 images with different UI control combinations</span></h2>
-      <div class="btn-row" style="margin-bottom: 16px;">
-        <button class="btn btn-primary" id="btn-play-all">Play All</button>
-        <button class="btn btn-danger" id="btn-stop-all-demo">Stop All</button>
+      <div class="mixer-strip">
+        <div class="mixer-row">
+          <span class="mixer-label">Inst</span>
+          <div class="mixer-pills" id="instrument-grid">
+            <button class="mixer-pill active" data-instrument="none">Default</button>
+            <button class="mixer-pill" data-instrument="piano">Piano</button>
+            <button class="mixer-pill" data-instrument="epiano">E.Piano</button>
+            <button class="mixer-pill" data-instrument="organ">Organ</button>
+            <button class="mixer-pill" data-instrument="synthLead">Synth</button>
+            <button class="mixer-pill" data-instrument="synthPad">Pad</button>
+            <button class="mixer-pill" data-instrument="bass">Bass</button>
+            <button class="mixer-pill" data-instrument="subBass">Sub</button>
+            <button class="mixer-pill" data-instrument="pluck">Pluck</button>
+            <button class="mixer-pill" data-instrument="strings">Strings</button>
+            <button class="mixer-pill" data-instrument="brass">Brass</button>
+            <button class="mixer-pill" data-instrument="flute">Flute</button>
+            <button class="mixer-pill" data-instrument="choir">Choir</button>
+            <button class="mixer-pill" data-instrument="bell">Bell</button>
+            <button class="mixer-pill" data-instrument="marimba">Marimba</button>
+            <button class="mixer-pill" data-instrument="guitar">Guitar</button>
+            <button class="mixer-pill" data-instrument="acid">Acid</button>
+            <button class="mixer-pill" data-instrument="chiptune">Chip</button>
+            <button class="mixer-pill" data-instrument="warmPad">Warm</button>
+            <button class="mixer-pill" data-instrument="glass">Glass</button>
+            <button class="mixer-pill" data-instrument="wobble">Wobble</button>
+          </div>
+        </div>
+        <div class="mixer-row">
+          <span class="mixer-label">Ens</span>
+          <div class="mixer-pills" id="ensemble-grid">
+            <button class="mixer-pill" data-ensemble="orchestra">Orchestra</button>
+            <button class="mixer-pill" data-ensemble="rockBand">Rock</button>
+            <button class="mixer-pill" data-ensemble="electronic">Electronic</button>
+            <button class="mixer-pill" data-ensemble="jazzTrio">Jazz</button>
+            <button class="mixer-pill" data-ensemble="ambient">Ambient</button>
+            <button class="mixer-pill" data-ensemble="chiptuneBand">Chip Band</button>
+            <button class="mixer-pill" data-ensemble="cinematic">Cinematic</button>
+            <button class="mixer-pill" data-ensemble="lofi">Lo-Fi</button>
+            <button class="mixer-pill" data-ensemble="acidHouse">Acid House</button>
+            <button class="mixer-pill" data-ensemble="minimal">Minimal</button>
+          </div>
+        </div>
+        <div class="mixer-row">
+          <span class="mixer-label">Algo</span>
+          <div class="mixer-pills" id="algorithm-grid">
+            <button class="mixer-pill active" data-algorithm="rgba-digit">RGBA Digit</button>
+            <button class="mixer-pill" data-algorithm="brightness-linear">Brightness</button>
+            <button class="mixer-pill" data-algorithm="color-harmony">Harmony</button>
+            <button class="mixer-pill" data-algorithm="spectral">Spectral</button>
+            <button class="mixer-pill" data-algorithm="contour">Contour</button>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button class="btn btn-primary" id="btn-play-all" style="padding:5px 14px; font-size:11px;">Play All</button>
+          <button class="btn btn-danger" id="btn-stop-all-demo" style="padding:5px 14px; font-size:11px;">Stop All</button>
+        </div>
       </div>
       <div class="grid" id="demo-grid" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));">
         <div>
@@ -257,62 +342,6 @@
       </div>
     </div>
 
-    <!-- ============ INSTRUMENT PRESETS ============ -->
-    <div class="section">
-      <h2>Instruments <span>Single instrument — click to apply</span></h2>
-      <div class="presets-grid" id="instrument-grid">
-        <div class="preset-card active" data-instrument="none"><div class="preset-icon">&#127925;</div><div class="preset-name">Default</div><div class="preset-desc">Basic triangle</div></div>
-        <div class="preset-card" data-instrument="piano"><div class="preset-icon">&#127929;</div><div class="preset-name">Piano</div><div class="preset-desc">Warm triangle</div></div>
-        <div class="preset-card" data-instrument="epiano"><div class="preset-icon">&#127928;</div><div class="preset-name">E.Piano</div><div class="preset-desc">Soft sine</div></div>
-        <div class="preset-card" data-instrument="organ"><div class="preset-icon">&#9835;</div><div class="preset-name">Organ</div><div class="preset-desc">Full square</div></div>
-        <div class="preset-card" data-instrument="synthLead"><div class="preset-icon">&#9889;</div><div class="preset-name">Synth Lead</div><div class="preset-desc">Sharp sawtooth</div></div>
-        <div class="preset-card" data-instrument="synthPad"><div class="preset-icon">&#127752;</div><div class="preset-name">Synth Pad</div><div class="preset-desc">Wide sine pad</div></div>
-        <div class="preset-card" data-instrument="bass"><div class="preset-icon">&#128266;</div><div class="preset-name">Bass</div><div class="preset-desc">Low square</div></div>
-        <div class="preset-card" data-instrument="subBass"><div class="preset-icon">&#128165;</div><div class="preset-name">Sub Bass</div><div class="preset-desc">Deep sine</div></div>
-        <div class="preset-card" data-instrument="pluck"><div class="preset-icon">&#127930;</div><div class="preset-name">Pluck</div><div class="preset-desc">Short triangle</div></div>
-        <div class="preset-card" data-instrument="strings"><div class="preset-icon">&#127931;</div><div class="preset-name">Strings</div><div class="preset-desc">Sawtooth legato</div></div>
-        <div class="preset-card" data-instrument="brass"><div class="preset-icon">&#127930;</div><div class="preset-name">Brass</div><div class="preset-desc">Bold sawtooth</div></div>
-        <div class="preset-card" data-instrument="flute"><div class="preset-icon">&#127926;</div><div class="preset-name">Flute</div><div class="preset-desc">Clear sine +1oct</div></div>
-        <div class="preset-card" data-instrument="choir"><div class="preset-icon">&#128100;</div><div class="preset-name">Choir</div><div class="preset-desc">Soft triangle pad</div></div>
-        <div class="preset-card" data-instrument="bell"><div class="preset-icon">&#128276;</div><div class="preset-name">Bell</div><div class="preset-desc">Bright sine +1oct</div></div>
-        <div class="preset-card" data-instrument="marimba"><div class="preset-icon">&#129685;</div><div class="preset-name">Marimba</div><div class="preset-desc">Bandpass triangle</div></div>
-        <div class="preset-card" data-instrument="guitar"><div class="preset-icon">&#127928;</div><div class="preset-name">Guitar</div><div class="preset-desc">Sawtooth pluck</div></div>
-        <div class="preset-card" data-instrument="acid"><div class="preset-icon">&#129514;</div><div class="preset-name">Acid</div><div class="preset-desc">TB-303 style</div></div>
-        <div class="preset-card" data-instrument="chiptune"><div class="preset-icon">&#127918;</div><div class="preset-name">Chiptune</div><div class="preset-desc">8-bit square</div></div>
-        <div class="preset-card" data-instrument="warmPad"><div class="preset-icon">&#9728;</div><div class="preset-name">Warm Pad</div><div class="preset-desc">Cozy triangle</div></div>
-        <div class="preset-card" data-instrument="glass"><div class="preset-icon">&#128142;</div><div class="preset-name">Glass</div><div class="preset-desc">Ethereal sine</div></div>
-        <div class="preset-card" data-instrument="wobble"><div class="preset-icon">&#127754;</div><div class="preset-name">Wobble</div><div class="preset-desc">LFO-like saw</div></div>
-      </div>
-    </div>
-
-    <!-- ============ ENSEMBLE PRESETS ============ -->
-    <div class="section">
-      <h2>Ensembles <span>Multi-instrument — multiple voices play together</span></h2>
-      <div class="presets-grid" id="ensemble-grid">
-        <div class="preset-card" data-ensemble="orchestra"><div class="preset-icon">&#127932;</div><div class="preset-name">Orchestra</div><div class="preset-desc">Strings + Brass + Flute</div></div>
-        <div class="preset-card" data-ensemble="rockBand"><div class="preset-icon">&#127928;</div><div class="preset-name">Rock Band</div><div class="preset-desc">Guitar + Bass + Organ</div></div>
-        <div class="preset-card" data-ensemble="electronic"><div class="preset-icon">&#128187;</div><div class="preset-name">Electronic</div><div class="preset-desc">Lead + SubBass + Pad</div></div>
-        <div class="preset-card" data-ensemble="jazzTrio"><div class="preset-icon">&#127927;</div><div class="preset-name">Jazz Trio</div><div class="preset-desc">E.Piano + Bass + Pluck</div></div>
-        <div class="preset-card" data-ensemble="ambient"><div class="preset-icon">&#127752;</div><div class="preset-name">Ambient</div><div class="preset-desc">WarmPad + Glass + Choir</div></div>
-        <div class="preset-card" data-ensemble="chiptuneBand"><div class="preset-icon">&#127918;</div><div class="preset-name">Chiptune Band</div><div class="preset-desc">Chip + ChipBass + Bell</div></div>
-        <div class="preset-card" data-ensemble="cinematic"><div class="preset-icon">&#127916;</div><div class="preset-name">Cinematic</div><div class="preset-desc">Strings + Choir + SubBass</div></div>
-        <div class="preset-card" data-ensemble="lofi"><div class="preset-icon">&#9749;</div><div class="preset-name">Lo-Fi</div><div class="preset-desc">E.Piano + WarmPad + Pluck</div></div>
-        <div class="preset-card" data-ensemble="acidHouse"><div class="preset-icon">&#129514;</div><div class="preset-name">Acid House</div><div class="preset-desc">Acid + SubBass + Pad</div></div>
-        <div class="preset-card" data-ensemble="minimal"><div class="preset-icon">&#9679;</div><div class="preset-name">Minimal</div><div class="preset-desc">Piano + Bell</div></div>
-      </div>
-    </div>
-
-    <!-- ============ ALGORITHMS ============ -->
-    <div class="section">
-      <h2>Sound Algorithms <span>Choose how pixel data maps to music</span></h2>
-      <div class="presets-grid" id="algorithm-grid">
-        <div class="preset-card active" data-algorithm="rgba-digit"><div class="preset-icon">&#127912;</div><div class="preset-name">RGBA Digit</div><div class="preset-desc">Channel digits map to pitch, rhythm, chords</div></div>
-        <div class="preset-card" data-algorithm="brightness-linear"><div class="preset-icon">&#9728;</div><div class="preset-name">Brightness</div><div class="preset-desc">Brightness to pitch, color to duration</div></div>
-        <div class="preset-card" data-algorithm="color-harmony"><div class="preset-icon">&#127752;</div><div class="preset-name">Color Harmony</div><div class="preset-desc">HSL hue to scale degree, saturation to velocity</div></div>
-        <div class="preset-card" data-algorithm="spectral"><div class="preset-icon">&#127926;</div><div class="preset-name">Spectral</div><div class="preset-desc">RGB as frequency bands (high/mid/low)</div></div>
-        <div class="preset-card" data-algorithm="contour"><div class="preset-icon">&#12336;</div><div class="preset-name">Contour</div><div class="preset-desc">Follow brightness gradients for melody</div></div>
-      </div>
-    </div>
 
     <!-- ============ UPLOAD IMAGE ============ -->
     <div class="section">
@@ -1124,7 +1153,7 @@ securePlayer.<span class="fn">init</span>();
       document.getElementById('opt-maxFileSize').value = '10485760';
       document.getElementById('val-maxFileSize').textContent = '10 MB';
       currentAlgorithm = 'rgba-digit';
-      document.querySelectorAll('#algorithm-grid .preset-card').forEach(function(card) {
+      document.querySelectorAll('#algorithm-grid .mixer-pill').forEach(function(card) {
         card.classList.toggle('active', card.dataset.algorithm === 'rgba-digit');
       });
       updateAllValueDisplays();
@@ -1289,12 +1318,11 @@ securePlayer.<span class="fn">init</span>();
       currentEnsemble = null;
       currentInstrument = (name === 'none') ? null : name;
 
-      // Update UI active states
-      document.querySelectorAll('#instrument-grid .preset-card').forEach(function(card) {
-        card.classList.toggle('active', card.dataset.instrument === name);
+      document.querySelectorAll('#instrument-grid .mixer-pill').forEach(function(p) {
+        p.classList.toggle('active', p.dataset.instrument === name);
       });
-      document.querySelectorAll('#ensemble-grid .preset-card').forEach(function(card) {
-        card.classList.remove('active');
+      document.querySelectorAll('#ensemble-grid .mixer-pill').forEach(function(p) {
+        p.classList.remove('active');
       });
 
       initPlayer();
@@ -1304,26 +1332,25 @@ securePlayer.<span class="fn">init</span>();
       currentInstrument = null;
       currentEnsemble = name;
 
-      // Update UI active states
-      document.querySelectorAll('#instrument-grid .preset-card').forEach(function(card) {
-        card.classList.toggle('active', card.dataset.instrument === 'none' ? false : false);
+      document.querySelectorAll('#instrument-grid .mixer-pill').forEach(function(p) {
+        p.classList.remove('active');
       });
-      document.querySelectorAll('#ensemble-grid .preset-card').forEach(function(card) {
-        card.classList.toggle('active', card.dataset.ensemble === name);
+      document.querySelectorAll('#ensemble-grid .mixer-pill').forEach(function(p) {
+        p.classList.toggle('active', p.dataset.ensemble === name);
       });
 
       initPlayer();
     }
 
-    document.querySelectorAll('#instrument-grid .preset-card').forEach(function(card) {
-      card.addEventListener('click', function() {
-        applyInstrument(card.dataset.instrument);
+    document.querySelectorAll('#instrument-grid .mixer-pill').forEach(function(p) {
+      p.addEventListener('click', function() {
+        applyInstrument(p.dataset.instrument);
       });
     });
 
-    document.querySelectorAll('#ensemble-grid .preset-card').forEach(function(card) {
-      card.addEventListener('click', function() {
-        applyEnsemble(card.dataset.ensemble);
+    document.querySelectorAll('#ensemble-grid .mixer-pill').forEach(function(p) {
+      p.addEventListener('click', function() {
+        applyEnsemble(p.dataset.ensemble);
       });
     });
 
@@ -1332,15 +1359,15 @@ securePlayer.<span class="fn">init</span>();
 
     function applyAlgorithm(name) {
       currentAlgorithm = name;
-      document.querySelectorAll('#algorithm-grid .preset-card').forEach(function(card) {
-        card.classList.toggle('active', card.dataset.algorithm === name);
+      document.querySelectorAll('#algorithm-grid .mixer-pill').forEach(function(p) {
+        p.classList.toggle('active', p.dataset.algorithm === name);
       });
       initPlayer();
     }
 
-    document.querySelectorAll('#algorithm-grid .preset-card').forEach(function(card) {
-      card.addEventListener('click', function() {
-        applyAlgorithm(card.dataset.algorithm);
+    document.querySelectorAll('#algorithm-grid .mixer-pill').forEach(function(p) {
+      p.addEventListener('click', function() {
+        applyAlgorithm(p.dataset.algorithm);
       });
     });
 
@@ -1594,7 +1621,7 @@ securePlayer.<span class="fn">init</span>();
           // Update algorithm UI
           if (config.algorithm) {
             currentAlgorithm = config.algorithm;
-            document.querySelectorAll('#algorithm-grid .preset-card').forEach(function(card) {
+            document.querySelectorAll('#algorithm-grid .mixer-pill').forEach(function(card) {
               card.classList.toggle('active', card.dataset.algorithm === config.algorithm);
             });
           }
